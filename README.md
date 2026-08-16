@@ -42,11 +42,16 @@ To run selfhex, you'll need:
 > 
 > For `pyinstaller`, you can either:
 > 1. Force `pip` to do it against its will: `pip install pyinstaller --break-system-packages`;
-> 2. Use `pipx` (on Arch, `pip install python-pipx`), then `pipx install pyinstaller && pipx ensurepath`;
+> 2. Use `pipx` (on Arch, `sudo pacman -S python-pipx`) to install `pyinstaller`. See below.
 
 ## Installation
 Clone the repository, then run `build.py`, like this:
 ```bash
+# If you're using pipx:
+pipx install pyinstaller
+pipx inject pyinstaller colorama
+pipx ensurepath
+
 git clone https://github.com/your-username/selfhex.git
 cd selfhex
 python3 build.py
