@@ -52,7 +52,7 @@ pipx install pyinstaller
 pipx inject pyinstaller colorama
 pipx ensurepath
 
-git clone https://github.com/your-username/selfhex.git
+git clone https://github.com/QuantumsSources/selfhex.git
 cd selfhex
 python3 build.py
 ```
