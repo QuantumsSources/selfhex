@@ -11,7 +11,7 @@ Made with ♥ by quantum.
 
 > [!important]
 > Currently, due to _heavy, unsupervised_ usage of `termios` and `tty`, selfhex only works on Linux!  
-> This will remain in the foreseeable future.  
+> This limitation is expected to stay for the foreseeable future.  
 > Sorry, not sorry, Windows people. </3
 
 ## Features
