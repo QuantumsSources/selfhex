@@ -3,53 +3,11 @@ import os
 import re
 import tty
 import sys
-import time
 import mmap
 import termios
 import selfhex_commons
 from colorama import Fore, Back
-from selfhex_commons import col_str
-
-close_log_file_path: str = ""
-latest_log_file_path: str = ""
-LOG_FOLDER = os.path.expanduser("~/.selfhex")
-
-def log(level: str, message: str):
-    if close_log_file_path == "" or latest_log_file_path == "":
-        return
-    cur_time = time.strftime("%H:%M:%S")
-    try:
-        with open(latest_log_file_path, "a") as f:
-            f.write(f"{level} @ {cur_time}: {message}\n")
-    except Exception as e:
-        sys.stderr.write(f"Logging error: {e}\n")
-
-def log_init():
-    global close_log_file_path, latest_log_file_path
-
-    if not os.path.exists(LOG_FOLDER):
-        os.makedirs(LOG_FOLDER, exist_ok=True)
-
-    timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
-    close_log_file_path = os.path.join(LOG_FOLDER, f"selfhex-{timestamp}.log")
-    latest_log_file_path = os.path.join(LOG_FOLDER, "latest.log")
-
-    open(close_log_file_path, "w").close()
-    open(latest_log_file_path, "w").close()
-
-    log("INFO", f"Logging started.")
-
-def log_stop():
-    if close_log_file_path == "" or latest_log_file_path == "":
-        return
-    log("INFO", f"Transferring logs to {close_log_file_path}")
-    log("INFO", "Stopping logs")
-
-    try:
-        with open(latest_log_file_path, "rb") as src, open(close_log_file_path, "wb") as dst:
-            dst.write(src.read())
-    except Exception as e:
-        sys.stderr.write(f"Log transfer error: {e}\n")
+from selfhex_commons import col_str, log
 
 def get_slice(mm: mmap.mmap | None, offset: int, length: int) -> bytes:
     if not mm or offset >= len(mm):
@@ -70,7 +28,7 @@ def open_mmap(path: str | None):
 
 class HexViewer:
     def __init__(self, file_1_path: str | None = None, file_2_path: str | None = None, bytes_per_line: int = 8):
-        log_init()
+        selfhex_commons.log_init()
 
         self.file_1_path = file_1_path
         self.file_2_path = file_2_path
@@ -82,8 +40,12 @@ class HexViewer:
 
         self.current_line = 1
         self.marks = {}
+        self.mark_pages = {}
         self.mark_lengths = {}
-        self.marked_bytes = set()
+        self.mark_cols = {}
+        self.marked_bytes = {}
+        self._rebuild_mark_pages()
+
         self.running = True
         self.fits = True
         self.diff_mode = False
@@ -211,12 +173,16 @@ class HexViewer:
         return self._format_standard_line(data_row)
 
     @staticmethod
-    def _format_byte(b: int, is_diff: bool = False, is_marked: bool = False) -> str:
+    def _format_byte(b: int, is_diff: bool = False, mark_col: str | None = None) -> str:
         hex_b = f"{b:02X}"
-        if is_marked and is_diff:
-            return Back.YELLOW + Fore.RED + hex_b + Fore.RESET + Back.RESET
-        if is_marked:
-            return Fore.YELLOW + hex_b + Fore.RESET
+
+        if mark_col:
+            fg = getattr(Fore, mark_col.upper(), Fore.YELLOW)
+            bg = getattr(Back, mark_col.upper(), Back.YELLOW)
+
+            if is_diff:
+                return bg + Fore.RED + hex_b + Fore.RESET + Back.RESET
+            return fg + hex_b + Fore.RESET
         if is_diff:
             return Fore.RED + hex_b + Fore.RESET
         if b == 0:
@@ -247,15 +213,16 @@ class HexViewer:
                     is_diff = True
 
             byte_offset = offset + i
-            is_marked_1 = byte_offset in self.marked_bytes
-            is_marked_2 = byte_offset in self.marked_bytes
+            mark_col = None
+            if self.marked_bytes.get(byte_offset, None) is not None:
+                mark_col = self.mark_cols[self.marked_bytes[byte_offset][-1]]
 
             if b1 is not None:
-                line_1_parts.append(self._format_byte(b1, is_diff, is_marked_1))
+                line_1_parts.append(self._format_byte(b1, is_diff, mark_col))
                 char_1 = chr(b1) if 32 <= b1 <= 126 else "."
                 ascii_1_parts.append(Fore.RED + char_1 + Fore.RESET if is_diff else char_1)
             if b2 is not None:
-                line_2_parts.append(self._format_byte(b2, is_diff, is_marked_2))
+                line_2_parts.append(self._format_byte(b2, is_diff, mark_col))
                 char_2 = chr(b2) if 32 <= b2 <= 126 else "."
                 ascii_2_parts.append(Fore.RED + char_2 + Fore.RESET if is_diff else char_2)
 
@@ -302,15 +269,19 @@ class HexViewer:
             b2 = chunk_2[i] if i < len(chunk_2) else None
 
             is_diff = (b1 != b2)
-            is_marked_1 = (off1 + i) in self.marked_bytes
-            is_marked_2 = (off2 + i) in self.marked_bytes
+            mark_col_1 = None
+            if self.marked_bytes.get(off1, None) is not None:
+                mark_col_1 = self.mark_cols[self.marked_bytes[off1][-1]]
+            mark_col_2 = None
+            if self.marked_bytes.get(off2, None) is not None:
+                mark_col_2 = self.mark_cols[self.marked_bytes[off2][-1]]
 
             if b1 is not None:
-                line_1_parts.append(self._format_byte(b1, is_diff, is_marked_1))
+                line_1_parts.append(self._format_byte(b1, is_diff, mark_col_1))
                 char1 = chr(b1) if 32 <= b1 <= 126 else "."
                 ascii_1_parts.append(Fore.RED + char1 + Fore.RESET if is_diff else char1)
             if b2 is not None:
-                line_2_parts.append(self._format_byte(b2, is_diff, is_marked_2))
+                line_2_parts.append(self._format_byte(b2, is_diff, mark_col_2))
                 char2 = chr(b2) if 32 <= b2 <= 126 else "."
                 ascii_2_parts.append(Fore.RED + char2 + Fore.RESET if is_diff else char2)
 
@@ -461,6 +432,44 @@ class HexViewer:
     def _has_files(self) -> bool:
         return self.file_1_path is not None or self.file_2_path is not None
 
+    def _mark_bytes(self, name: str, start_off: int, end_off: int):
+        for i in range(end_off - start_off):
+            offset = start_off + i
+            if self.marked_bytes.get(offset, None) is None:
+                self.marked_bytes[offset] = []
+            self.marked_bytes[offset].append(name)
+
+    def _unmark_bytes(self, name: str, start_off: int, end_off: int):
+        for i in range(end_off - start_off):
+            offset = start_off + i
+            if self.marked_bytes.get(offset, None) is None:
+                continue
+            marks: list[str] = self.marked_bytes[offset]
+            marks.remove(name)
+            if not marks:
+                self.marked_bytes.pop(offset, None)
+
+    def _rebuild_mark_pages(self):
+        if not self.marks:
+            self.mark_pages = {1: "No marks to show."}
+            return
+
+        self.mark_pages = {}
+        page = ""
+        last_page = 1
+        for mark in self.marks:
+            if len(page) + len(mark) > selfhex_commons.MIN_TERMINAL_SIZE[0] - 1:
+                self.mark_pages[last_page] = page.removesuffix(", ")
+                page = ""
+                last_page += 1
+            page += f"{mark}, "
+        if page:
+            self.mark_pages[last_page] = page.removesuffix(", ")
+
+    @staticmethod
+    def get_mark_name(mark: str):
+        return mark.upper().strip()[0:16]
+
     def prompt_command(self):
         if not self.fits:
             return
@@ -493,6 +502,11 @@ class HexViewer:
                 self.message = "Please load a file before using the m[rk] command."
                 return
             self.cmd_mark(args)
+        elif cmd in ("um", "umk", "unmark"):
+            if not self._has_files():
+                self.message = "Please load a file before using the um[k] command."
+                return
+            self.cmd_unmark(args)
         elif cmd in ("r", "rel", "reload"):
             if not self._has_files():
                 self.message = "Please load a file before using the r[el] command."
@@ -825,8 +839,8 @@ class HexViewer:
             relative = "-"
             target = target[1:]
 
-        if target in self.marks:
-            target_offset = self.marks[target]
+        if self.get_mark_name(target) in self.marks:
+            target_offset = self.marks[self.get_mark_name(target)]
         else:
             try:
                 target_offset = int(target, 0)
@@ -854,64 +868,61 @@ class HexViewer:
         self.current_line = max(1, min(max_scroll, line_idx + 1))
         self.message = f"Jumped to 0x{final_offset:04X}"
 
-    def cmd_mark(self, args):
+    def cmd_mark(self, args: list[str]):
         if not args:
-            self.message = "Usage: m[rk] <mark_name>|none [<off> [<len>]]"
+            self.message = f"Marks set: {len(self.marks)} | Pages: 1/{len(self.mark_pages)}"
             return
 
         name = args[0]
-        if len(args) > 1:
-            try:
-                offset = self._parse_offset(args[1])
-            except ValueError:
-                self.message = f"Invalid offset: {args[1]}"
-                log("ERROR", f"Invalid offset: {args[1]}")
-                return
-        else:
-            offset = (self.current_line - 1) * self.bytes_per_line
-
-        if name.lower() == "none":
-            marks_at_offset = [m for m, off in self.marks.items() if off == offset]
-            if marks_at_offset:
-                for m in marks_at_offset:
-                    length = self.mark_lengths.get(m, self.bytes_per_line)
-
-                    self.marked_bytes.difference_update(range(offset, offset + length))
-
-                    del self.marks[m]
-                    if self.mark_lengths and (m in self.mark_lengths):
-                        del self.mark_lengths[m]
-
-                removed_names = ", ".join(f"'{m}'" for m in marks_at_offset)
-                if len(marks_at_offset) == 1:
-                    self.message = f"Removed mark {removed_names} @ 0x{offset:04X}"
-                else:
-                    self.message = f"Removed marks @ 0x{offset:04X}"
-                log("INFO", f"Removed marks {removed_names} @ 0x{offset:04X}")
-            else:
-                self.message = f"No mark found @ 0x{offset:04X}"
-                log("INFO", f"No mark found @ 0x{offset:04X}")
+        try:
+            page = int(name, 0)
+            page_idx = max(1, min(page, len(self.mark_pages)))
+            page_content = self.mark_pages[page_idx]
+            self.message = page_content
             return
+        except ValueError:
+            name = self.get_mark_name(name)
+
+        col: str | None = None
+        nums = []
+
+        for arg in args[1:]:
+            if hasattr(Fore, arg.upper()):
+                col = arg.upper()
+            else:
+                try:
+                    num = int(arg, 0)
+                    nums.append(num)
+                except ValueError:
+                    try:
+                        num = self._parse_offset(arg)
+                        nums.append(num)
+                    except ValueError:
+                        pass
+
+        if not nums:
+            offset = self.current_line * self.bytes_per_line
+        else:
+            offset = nums[0]
 
         mark_len = self.bytes_per_line
-        if len(args) > 2:
-            try:
-                mark_len = int(args[2], 0)
-            except ValueError:
-                self.message = f"Invalid length: {args[2]}"
-                log("ERROR", f"Invalid length: {args[2]}")
-                return
+        if len(nums) > 1:
+            mark_len = nums[1]
 
         moved = None
         if name in self.marks:
             moved = name
             old_offset = self.marks[name]
             old_length = self.mark_lengths.get(name)
-            self.marked_bytes.difference_update(range(old_offset, old_offset + old_length))
+            self._unmark_bytes(name, old_offset, old_offset + old_length)
 
         self.marks[name] = offset
         self.mark_lengths[name] = mark_len
-        self.marked_bytes.update(offset + b for b in range(mark_len))
+        self._mark_bytes(name, offset, offset + mark_len)
+        if col is not None:
+            self.mark_cols[name] = col
+        else:
+            self.mark_cols[name] = selfhex_commons.get_rand_color()
 
         if moved is not None:
             self.message = f"Moved mark '{moved}' to 0x{offset:04X}"
@@ -919,6 +930,30 @@ class HexViewer:
         else:
             self.message = f"Set new mark '{name}' @ 0x{offset:04X}"
             log("INFO", f"Set new mark {name} @ 0x{offset:04X}")
+        self._rebuild_mark_pages()
+        return
+
+    def cmd_unmark(self, args):
+        if not args:
+            self.message = "Usage: um[k] <name>"
+            return
+
+        name = self.get_mark_name(args[0])
+        if name in self.marks:
+            offset = self.marks[name]
+            length = self.mark_lengths[name]
+            self._unmark_bytes(name, offset, offset + length)
+
+            self.mark_cols.pop(name, None)
+            self.mark_lengths.pop(name, None)
+            self.marks.pop(name, None)
+            self.message = f"Cleared mark {name}"
+            log("INFO", f"Cleared mark {name}")
+            self._rebuild_mark_pages()
+
+            return
+        self.message = f"Mark {name} not found."
+        log("WARN", f"Mark {name} not found.")
         return
 
     def cmd_find(self, args):
@@ -992,7 +1027,7 @@ class HexViewer:
                 selfhex_commons.remove_temp_file(clone)
                 log("INFO", f"Removing clone {clone}")
             log("INFO", "Quitting!")
-            log_stop()
+            selfhex_commons.log_stop()
 
         return exit_status
 

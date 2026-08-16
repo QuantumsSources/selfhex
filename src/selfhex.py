@@ -4,7 +4,7 @@ import sys
 import selfhex_tui
 import selfhex_commons
 from colorama import Fore
-from selfhex_commons import col_str
+from selfhex_commons import col_str, LOG_FOLDER
 
 
 def get_args(sys_args: list[str]) -> tuple[list[str], str, dict[str, str]]:
@@ -57,6 +57,13 @@ def main(sys_args: list[str]):
         run_selfhex(None, None)
         return
 
+    if "clear-logs" in args:
+        if os.path.exists(selfhex_commons.LOG_FOLDER):
+            os.remove(LOG_FOLDER)
+
+    if "show-logs" in args:
+        print(f"selfhex: info: log folder location is {selfhex_commons.LOG_FOLDER}")
+
     if "help" in args or "h" in option_str:
         print("usage: selfhex [<OPTION>] [<file_1> [<file_2>]] [<ARGS>]")
         print("OPTION:")
@@ -71,6 +78,8 @@ def main(sys_args: list[str]):
         print(col_str("--new", Fore.LIGHTYELLOW_EX) + "=<name>: create new file")
         print("     " + col_str("--force", Fore.LIGHTYELLOW_EX) + ": overwrite file if it already exists")
         print("     " + col_str("--size", Fore.LIGHTYELLOW_EX) + "=<size>: specify file size")
+        print(col_str("--clear-logs", Fore.LIGHTYELLOW_EX) + ": clear logs folder")
+        print(col_str("--show-logs", Fore.LIGHTYELLOW_EX) + ": print log folder location")
         return
 
     if "version" in args or "v" in option_str:

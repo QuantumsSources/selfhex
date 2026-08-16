@@ -3,13 +3,14 @@ import re
 import os
 import sys
 import tty
+import time
 import select
 import random
 import termios
 from colorama import Fore, init
 
-SELFHEX_VERSION = "1.19.10+3"
-SELFHEX_VERCODE = "Wayfarer"
+SELFHEX_VERSION = "1.20.4+3"
+SELFHEX_VERCODE = "Painter"
 MIN_TERMINAL_SIZE = (80, 20)
 FAST_SCROLL_OFFSET = 128
 
@@ -55,7 +56,8 @@ COMMANDS = [
     "d[iff] [off|(<off1> [<off2> [<range>]])]",
     "f[n] (<hex>|<str>)",
     "j[mp] ([+-]<offset>)|<mark>",
-    "m[rk] <name>|none [<off> [<len>]]",
+    "m[rk] [<name> [<col>] [<off> [<len>]]]",
+    "um[k] <name>",
     "l[d] <file>",
     "u[ld] [1|2]",
     "sw[ap]",
@@ -86,7 +88,8 @@ COMMAND_HELP = {
     "d":  "d[iff] [off|(<off1> [<off2> [<range>]])]: compare files, offsets, or ranges",
     "f":  "f[n] (<hex>|<str>): search for hex sequence or text in file 1",
     "j":  "j[mp] ([+-]<offset>|<mark>): jump to abs/rel offset or mark",
-    "m":  "m[rk] <name>|none [<off> [<len>]]: set/clear mark at current or given offset",
+    "m":  "m[rk] [<name> [<col>] [<off> [<len>]]]: place a mark at given offset",
+    "um":  "um[k] <name>: clear a mark",
     "l":  "l[d] <file>: load a file into next free slot",
     "u":  "u[ld] [1|2]: unload slot 1, 2, or both",
     "sw": "sw[ap]: swap files in slot 1 and slot 2",
@@ -109,6 +112,8 @@ COMMAND_ALIASES = {
     "jump": "j",
     "mrk": "m",
     "mark": "m",
+    "umk": "um",
+    "unmark": "um",
     "str": "s",
     "stretch": "s",
     "swap": "sw",
@@ -238,7 +243,9 @@ def parse_file_size(size_str: str) -> int:
     }
 
     iec_units = {
-        "kib": 1, "mib": 2, "gib": 3
+        "kib": 1, "kibibyte": 1, "kibibytes": 1,
+        "mib": 2, "mebibyte": 2, "mebibytes": 2,
+        "gib": 3, "gibibyte": 3, "gibibytes": 3
     }
 
     if unit in iec_units:
@@ -249,3 +256,48 @@ def parse_file_size(size_str: str) -> int:
         raise ValueError(f"Unknown size unit: '{unit}' in '{size_str}'")
 
     return int(number * multiplier)
+
+def get_rand_color() -> str:
+    PALETTE = ["CYAN", "MAGENTA", "YELLOW", "GREEN", "BLUE", "LIGHTWHITE_EX"]
+    return random.choice(PALETTE)
+
+close_log_file_path: str = ""
+latest_log_file_path: str = ""
+LOG_FOLDER = os.path.expanduser("~/.selfhex")
+
+def log(level: str, message: str):
+    if close_log_file_path == "" or latest_log_file_path == "":
+        return
+    cur_time = time.strftime("%H:%M:%S")
+    try:
+        with open(latest_log_file_path, "a") as f:
+            f.write(f"{level} @ {cur_time}: {message}\n")
+    except Exception as e:
+        sys.stderr.write(f"Logging error: {e}\n")
+
+def log_init():
+    global close_log_file_path, latest_log_file_path
+
+    if not os.path.exists(LOG_FOLDER):
+        os.makedirs(LOG_FOLDER, exist_ok=True)
+
+    timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
+    close_log_file_path = os.path.join(LOG_FOLDER, f"selfhex-{timestamp}.log")
+    latest_log_file_path = os.path.join(LOG_FOLDER, "latest.log")
+
+    open(close_log_file_path, "w").close()
+    open(latest_log_file_path, "w").close()
+
+    log("INFO", f"Logging started.")
+
+def log_stop():
+    if close_log_file_path == "" or latest_log_file_path == "":
+        return
+    log("INFO", f"Transferring logs to {close_log_file_path}")
+    log("INFO", "Stopping logs")
+
+    try:
+        with open(latest_log_file_path, "rb") as src, open(close_log_file_path, "wb") as dst:
+            dst.write(src.read())
+    except Exception as e:
+        sys.stderr.write(f"Log transfer error: {e}\n")
