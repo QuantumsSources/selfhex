@@ -485,7 +485,6 @@ class HexViewer:
         cmd_line = re.sub(r'\x1b\[[0-9;]*[A-Za-z]', '', cmd_line)
 
         if not cmd_line:
-            self.message = "Empty command. ':h' for help."
             return
 
         parts = cmd_line.split()
