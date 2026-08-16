@@ -4,7 +4,7 @@ import sys
 import selfhex_tui
 import selfhex_commons
 from colorama import Fore
-from selfhex_commons import col_str, LOG_FOLDER
+from selfhex_commons import col_str
 
 
 def get_args(sys_args: list[str]) -> tuple[list[str], str, dict[str, str]]:
@@ -59,10 +59,14 @@ def main(sys_args: list[str]):
 
     if "clear-logs" in args:
         if os.path.exists(selfhex_commons.LOG_FOLDER):
-            os.remove(LOG_FOLDER)
+            for f in os.listdir(selfhex_commons.LOG_FOLDER):
+                os.remove(os.path.join(selfhex_commons.LOG_FOLDER, f))
+            os.rmdir(selfhex_commons.LOG_FOLDER)
+        return
 
     if "show-logs" in args:
         print(f"selfhex: info: log folder location is {selfhex_commons.LOG_FOLDER}")
+        return
 
     if "help" in args or "h" in option_str:
         print("usage: selfhex [<OPTION>] [<file_1> [<file_2>]] [<ARGS>]")
