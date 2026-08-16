@@ -538,7 +538,7 @@ class HexViewer:
             self.cmd_diff(args)
         elif cmd in ("q", "quit"):
             self.running = False
-        elif cmd in ("h", "help"):
+        elif cmd in ("h", "help", "?"):
             self.cmd_help(args)
         elif cmd in ("v", "ver", "version"):
             self.cmd_ver()

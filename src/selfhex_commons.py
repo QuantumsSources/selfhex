@@ -9,7 +9,7 @@ import random
 import termios
 from colorama import Fore, init
 
-SELFHEX_VERSION = "1.20.4+4"
+SELFHEX_VERSION = "1.20.4+5"
 SELFHEX_VERCODE = "Painter"
 MIN_TERMINAL_SIZE = (80, 20)
 FAST_SCROLL_OFFSET = 128
