@@ -18,6 +18,10 @@ if importlib.util.find_spec("colorama") is None:
     print("       install via pip, or your package manager")
     sys.exit(1)
 
+result = subprocess.run(["killall", "selfhex"])
+if result.returncode == 0:
+    print("> killed previous selfhex processes")
+
 HOME = Path.home()
 INSTALL_DIR = HOME / ".local/share/selfhex"
 BIN_DIR = HOME / ".local/bin"
@@ -30,7 +34,7 @@ if not BUILD_TARGET.exists():
     sys.exit(1)
 
 print("> compiling selfhex")
-cmd = ["pyinstaller", "--onedir", "--noconfirm", str(BUILD_TARGET)]
+cmd = ["pyinstaller", "--clean", "--onedir", "--noconfirm", str(BUILD_TARGET)]
 result = subprocess.run(cmd)
 
 if result.returncode != 0:
