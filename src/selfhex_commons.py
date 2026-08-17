@@ -9,7 +9,7 @@ import random
 import termios
 from colorama import Fore, init
 
-SELFHEX_VERSION = "1.20.4+6"
+SELFHEX_VERSION = "1.20.6+4"
 SELFHEX_VERCODE = "Painter"
 MIN_TERMINAL_SIZE = (80, 20)
 FAST_SCROLL_OFFSET = 128
@@ -23,28 +23,28 @@ def col_str(string: str, fg: Fore|None = None) -> str:
 
 SELFHEX_EMPTY_MSG = [
     f"",
-    f"* Welcome to {col_str('selfhex', Fore.LIGHTGREEN_EX)}!",
+    f"Welcome to {col_str('selfhex', Fore.LIGHTGREEN_EX)}!",
     f"",
-    f"* This space is where your files will appear once you load them!",
-    f"* You can use the {col_str('load (:l[d])', Fore.LIGHTYELLOW_EX)} command to do so.",
+    f"This space is where your files will appear once you load them!",
+    f"You can use the {col_str('load (:l[d])', Fore.LIGHTYELLOW_EX)} command to do so.",
     f"",
-    f"* Alternatively, you can use the {col_str('new (:n[ew])', Fore.LIGHTYELLOW_EX)} command to create...",
-    f"* ...a new file and load it into the next free slot.",
+    f"Alternatively, you can use the {col_str('new (:n[ew])', Fore.LIGHTYELLOW_EX)} command to create...",
+    f"...a new file and load it into the next free slot.",
     f"",
-    f"* For a list of all commands, use the {col_str('help (:h[elp])', Fore.LIGHTYELLOW_EX)} command.",
+    f"For a list of all commands, use the {col_str('help (:h[elp])', Fore.LIGHTYELLOW_EX)} command.",
     f"",
-    f"* You are running version {col_str(SELFHEX_VERSION, Fore.LIGHTYELLOW_EX)}"
+    f"You are running version {col_str(SELFHEX_VERSION, Fore.LIGHTYELLOW_EX)}"
         f" ({col_str(SELFHEX_VERCODE, Fore.LIGHTYELLOW_EX)})"
         f" of {col_str('selfhex', Fore.LIGHTGREEN_EX)}."
 ]
 
 SELFHEX_SMALL_MSG = [
     f"",
-    f"* selfhex is feeling...",
-    f"* ...claustrophobic!",
+    f"selfhex is feeling...",
+    f"...claustrophobic!",
     f"",
-    f"* The min. size is {MIN_TERMINAL_SIZE[0]}x{MIN_TERMINAL_SIZE[1]}.",
-    f"* (currently %Cx%L)"
+    f"The min. size is {MIN_TERMINAL_SIZE[0]}x{MIN_TERMINAL_SIZE[1]}.",
+    f"(currently %Cx%L)"
 ]
 
 COMMANDS = [

@@ -124,11 +124,19 @@ class HexViewer:
             return 0
         return (max_len + self.bytes_per_line - 1) // max(1, self.bytes_per_line)
 
+    @staticmethod
+    def _center_line(line: str, buf: str = " "):
+        ANSI_ESCAPE = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+        columns = os.get_terminal_size().columns
+        visible_len = len(ANSI_ESCAPE.sub('', line))
+        pad, comp = divmod(max(0, columns - visible_len), 2)
+
+        return (buf * pad) + line + (buf * (pad + comp))
+
     def _get_header_line(self) -> str:
         if not self.fits:
-            msg = "* TERMINAL TOO SMALL! "
-            columns = os.get_terminal_size().columns
-            return msg + "*" * (columns - len(msg))
+            msg = " OUT OF SPACE! "
+            return self._center_line(msg, "*")
 
         asc_width = max(7, self.bytes_per_line)
         asc_hdr_1 = f"{'ascii 1':^{asc_width}}"
@@ -156,9 +164,8 @@ class HexViewer:
             else:
                 return f"{off_hdr} | {header_1} | {asc_hdr_1} |"
         else:
-            msg = "* NO FILES LOADED! "
-            columns = os.get_terminal_size().columns
-            return msg + "*" * (columns - len(msg))
+            msg = " NO FILES LOADED! "
+            return self._center_line(msg, "*")
 
     def _get_line(self, line_idx: int) -> str:
         if line_idx == 0:
@@ -312,7 +319,6 @@ class HexViewer:
 
         if console_size.columns < min_size[0] or console_size.lines < min_size[1]:
             self.fits = False
-
             header_str = self._get_line(0)
             buf = ["\x1b[H", header_str + "\x1b[K\n"]
 
@@ -324,8 +330,7 @@ class HexViewer:
                     if console_size.lines < min_size[1]:
                         line = line.replace("%L", col_str("%L", Fore.LIGHTRED_EX))
                     line = line.replace("%C", str(console_size.columns)).replace("%L", str(console_size.lines))
-
-                    buf.append(f"{line}\x1b[K\n")
+                    buf.append(f"{self._center_line(line)}\x1b[K\n")
                 else:
                     buf.append("\x1b[K\n")
 
@@ -337,22 +342,26 @@ class HexViewer:
         else:
             self.fits = True
 
-            header_str = self._get_line(0)
+            header_str = self._center_line(self._get_line(0))
             buf = ["\x1b[H", header_str + "\x1b[K\n"]
 
             total_view_lines = self.total_data_lines + 1
 
             for i in range(max_lines):
-                if self.file_1_path or self.file_2_path:
+                if self._has_files():
                     idx = self.current_line + i
                     if idx < total_view_lines:
-                        line_str = self._get_line(idx)
+                        line_str = self._center_line(self._get_line(idx))
                         buf.append(line_str + "\x1b[K\n")
                     else:
-                        buf.append("~\x1b[K\n")
+                        if idx == total_view_lines + 20:
+                            buf.append(f"{self._center_line(col_str(
+                                '(woah... it\'s so empty down here...)', Fore.LIGHTBLACK_EX))}\x1b[K\n")
+                            continue
+                        buf.append(f"\x1b[K\n")
                 else:
                     if i < len(selfhex_commons.SELFHEX_EMPTY_MSG):
-                        buf.append(f"{selfhex_commons.SELFHEX_EMPTY_MSG[i]}\x1b[K\n")
+                        buf.append(f"{self._center_line(selfhex_commons.SELFHEX_EMPTY_MSG[i])}\x1b[K\n")
                     else:
                         buf.append("\x1b[K\n")
 
@@ -978,9 +987,10 @@ class HexViewer:
         if idx == -1:
             idx = self.mm_1.find(target_bytes, 0, current_offset)
         if idx != -1:
-            line_idx = idx // self.bytes_per_line
-            max_scroll = max(1, self.total_data_lines)
-            self.current_line = max(1, min(max_scroll, line_idx + 1))
+            self.cmd_jump([str(idx)])
+            mark_name = target_bytes.hex()
+            self.cmd_mark([mark_name, str(idx), str(len(target_bytes))])
+
             self.message = f"Found sequence at 0x{idx:04X}"
             log("INFO", f"Found sequence at 0x{idx:04X}")
         else:
