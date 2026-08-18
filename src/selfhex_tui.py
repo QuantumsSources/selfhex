@@ -354,7 +354,7 @@ class HexViewer:
                         line_str = self._center_line(self._get_line(idx))
                         buf.append(line_str + "\x1b[K\n")
                     else:
-                        if idx == total_view_lines + 20:
+                        if idx == total_view_lines + console_size.lines - 6:
                             buf.append(f"{self._center_line(col_str(
                                 '(woah... it\'s so empty down here...)', Fore.LIGHTBLACK_EX))}\x1b[K\n")
                             continue

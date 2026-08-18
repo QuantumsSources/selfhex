@@ -149,6 +149,7 @@ def main(sys_args: list[str]):
             selfhex_commons.clear_temp_files()
 
 if __name__ == "__main__":
-    if sys.platform != "linux":
+    if sys.platform not in ("linux", "android"):
         print("selfhex: selfhex currently only works on linux")
+        sys.exit(0)
     main(sys.argv[1:])
