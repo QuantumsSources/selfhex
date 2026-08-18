@@ -1029,6 +1029,9 @@ class HexViewer:
                     self.running = False
                 elif key == ":":
                     self.prompt_command()
+        except Exception as e:
+            log("ERROR", f"An error occurred during run process: {e}")
+            exit_status = f"An error occurred during run process: {e}"
         finally:
             sys.stdout.write("\x1b[2J\x1b[H")
             sys.stdout.flush()
