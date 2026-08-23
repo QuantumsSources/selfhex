@@ -3,7 +3,7 @@ import os
 import sys
 import selfhex_tui
 import selfhex_commons
-from colorama import Fore
+from ansicodelib import ANSIColors as col
 from selfhex_commons import col_str
 
 
@@ -70,29 +70,29 @@ def main(sys_args: list[str]):
     if "help" in args or "h" in option_str:
         print("usage: selfhex [<OPTION>] [<file_1> [<file_2>]] [<ARGS>]")
         print("OPTION:")
-        print(col_str("-h", Fore.LIGHTGREEN_EX) + ": print this help")
-        print(col_str("-v", Fore.LIGHTGREEN_EX) + ": print version information")
-        print(col_str("-c", Fore.LIGHTGREEN_EX) + ": clone file 1 for self-diffing. is overridden if file 2 is set.")
+        print(col_str("-h", col.FG_GREEN_EX) + ": print this help")
+        print(col_str("-v", col.FG_GREEN_EX) + ": print version information")
+        print(col_str("-c", col.FG_GREEN_EX) + ": clone file 1 for self-diffing. is overridden if file 2 is set.")
         print("ARGS:")
-        print(col_str("--help", Fore.LIGHTYELLOW_EX) + ": same as -h")
-        print(col_str("--version", Fore.LIGHTYELLOW_EX) + ": same as -v")
-        print(col_str("--clone", Fore.LIGHTYELLOW_EX) + ": same as -c")
-        print("     " + col_str("--keep-clone", Fore.LIGHTYELLOW_EX) + ": keep clone file after exit")
-        print(col_str("--new", Fore.LIGHTYELLOW_EX) + "=<name>: create new file")
-        print("     " + col_str("--force", Fore.LIGHTYELLOW_EX) + ": overwrite file if it already exists")
-        print("     " + col_str("--size", Fore.LIGHTYELLOW_EX) + "=<size>: specify file size")
-        print(col_str("--clear-logs", Fore.LIGHTYELLOW_EX) + ": clear logs folder")
-        print(col_str("--show-logs", Fore.LIGHTYELLOW_EX) + ": print log folder location")
+        print(col_str("--help", col.FG_YELLOW_EX) + ": same as -h")
+        print(col_str("--version", col.FG_YELLOW_EX) + ": same as -v")
+        print(col_str("--clone", col.FG_YELLOW_EX) + ": same as -c")
+        print("     " + col_str("--keep-clone", col.FG_YELLOW_EX) + ": keep clone file after exit")
+        print(col_str("--new", col.FG_YELLOW_EX) + "=<name>: create new file")
+        print("     " + col_str("--force", col.FG_YELLOW_EX) + ": overwrite file if it already exists")
+        print("     " + col_str("--size", col.FG_YELLOW_EX) + "=<size>: specify file size")
+        print(col_str("--clear-logs", col.FG_YELLOW_EX) + ": clear logs folder")
+        print(col_str("--show-logs", col.FG_YELLOW_EX) + ": print log folder location")
         return
 
     if "version" in args or "v" in option_str:
         ver = selfhex_commons.SELFHEX_VERSION
         code = selfhex_commons.SELFHEX_VERCODE
 
-        print(f"{col_str('selfhex', Fore.LIGHTGREEN_EX)}"
-                        f" {col_str(f'v{ver}', Fore.LIGHTYELLOW_EX)} ({col_str(code, Fore.LIGHTYELLOW_EX)})"
+        print(f"{col_str('selfhex', col.FG_GREEN_EX)}"
+                        f" {col_str(f'v{ver}', col.FG_YELLOW_EX)} ({col_str(code, col.FG_YELLOW_EX)})"
                         f" - self-diffing capable hex viewer"
-                        f" | made with {col_str('♥', Fore.RED)} by quantum")
+                        f" | made with {col_str('♥', col.FG_RED_EX)} by quantum")
         return
 
     if "new" in args:

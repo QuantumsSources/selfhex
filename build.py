@@ -2,7 +2,6 @@ import sys
 import shutil
 import subprocess
 from pathlib import Path
-import importlib.util
 
 if sys.version_info < (3, 9):
     print("error: selfhex requires Python 3.9 or higher to build.")
@@ -11,11 +10,6 @@ if sys.version_info < (3, 9):
 if shutil.which("pyinstaller") is None:
     print("error: 'pyinstaller' is not installed")
     print("       install via pip or pipx")
-    sys.exit(1)
-
-if importlib.util.find_spec("colorama") is None:
-    print("error: 'colorama' is not installed")
-    print("       install via pip, or your package manager")
     sys.exit(1)
 
 result = subprocess.run(["killall", "selfhex"])

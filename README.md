@@ -32,15 +32,13 @@ Made with ♥ by quantum.
 To run selfhex, you'll need:
 - Python v3.9+, for everything;
 - `pyinstaller`, to compile it;
-- `colorama`, for pretty colors;
 - If `pip` doesn't work, read note below;
 - That's it;
 
 > [!note]
-> On some Linux distributions (Arch, mainly, btw), `pip` cannot directly install `pyinstaller` and `colorama` due to PEP 668.
-> For `colorama`, you can use your distro's package manager, for example: `sudo pacman -S python-colorama`.
+> On some Linux distributions (Arch, mainly, btw), `pip` cannot directly install `pyinstaller` due to PEP 668.
 > 
-> For `pyinstaller`, you can either:
+> To install it, you can either:
 > 1. Force `pip` to do it against its will: `pip install pyinstaller --break-system-packages`;
 > 2. Use `pipx` (on Arch, `sudo pacman -S python-pipx`) to install `pyinstaller`. See below.
 
@@ -49,7 +47,6 @@ Clone the repository, then run `build.py`, like this:
 ```bash
 # If you're using pipx:
 pipx install pyinstaller
-pipx inject pyinstaller colorama
 pipx ensurepath
 
 git clone https://github.com/QuantumsSources/selfhex.git
@@ -57,7 +54,7 @@ cd selfhex
 python3 build.py
 ```
 This will compile selfhex, link the binary to `~/.local/bin/selfhex`, and adds a desktop entry.
-Afterwards, you can either reboot, or update the desktop database.
+Afterward, you can either reboot, or update the desktop database.
 
 ## Usage
 ### Command line

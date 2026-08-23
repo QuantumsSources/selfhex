@@ -7,35 +7,33 @@ import time
 import select
 import random
 import termios
-from colorama import Fore, init
+from ansicodelib import ANSIColors as col
 
-SELFHEX_VERSION = "1.20.6+8"
+SELFHEX_VERSION = "1.20.7"
 SELFHEX_VERCODE = "Painter"
 MIN_TERMINAL_SIZE = (80, 20)
 FAST_SCROLL_OFFSET = 128
 
-init()
-
-def col_str(string: str, fg: Fore|None = None) -> str:
+def col_str(string: str, fg: str|None = None) -> str:
     if fg is not None:
-        string = fg + string + Fore.RESET
+        string = col.apply_colors(string, fg)
     return string
 
 SELFHEX_EMPTY_MSG = [
     f"",
-    f"Welcome to {col_str('selfhex', Fore.LIGHTGREEN_EX)}!",
+    f"Welcome to {col_str('selfhex', col.FG_GREEN_EX)}!",
     f"",
     f"This space is where your files will appear once you load them!",
-    f"You can use the {col_str('load (:l[d])', Fore.LIGHTYELLOW_EX)} command to do so.",
+    f"You can use the {col_str('load (:l[d])', col.FG_YELLOW_EX)} command to do so.",
     f"",
-    f"Alternatively, you can use the {col_str('new (:n[ew])', Fore.LIGHTYELLOW_EX)} command to create...",
+    f"Alternatively, you can use the {col_str('new (:n[ew])', col.FG_YELLOW_EX)} command to create...",
     f"...a new file and load it into the next free slot.",
     f"",
-    f"For a list of all commands, use the {col_str('help (:h[elp])', Fore.LIGHTYELLOW_EX)} command.",
+    f"For a list of all commands, use the {col_str('help (:h[elp])', col.FG_YELLOW_EX)} command.",
     f"",
-    f"You are running version {col_str(SELFHEX_VERSION, Fore.LIGHTYELLOW_EX)}"
-        f" ({col_str(SELFHEX_VERCODE, Fore.LIGHTYELLOW_EX)})"
-        f" of {col_str('selfhex', Fore.LIGHTGREEN_EX)}."
+    f"You are running version {col_str(SELFHEX_VERSION, col.FG_YELLOW_EX)}"
+        f" ({col_str(SELFHEX_VERCODE, col.FG_YELLOW_EX)})"
+        f" of {col_str('selfhex', col.FG_GREEN_EX)}."
 ]
 
 SELFHEX_SMALL_MSG = [

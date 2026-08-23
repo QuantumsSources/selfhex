@@ -6,7 +6,7 @@ import sys
 import mmap
 import termios
 import selfhex_commons
-from colorama import Fore, Back
+from ansicodelib import ANSIForeground, ANSIColors as col
 from selfhex_commons import col_str, log
 
 def get_slice(mm: mmap.mmap | None, offset: int, length: int) -> bytes:
@@ -184,16 +184,16 @@ class HexViewer:
         hex_b = f"{b:02X}"
 
         if mark_col:
-            fg = getattr(Fore, mark_col.upper(), Fore.YELLOW)
-            bg = getattr(Back, mark_col.upper(), Back.YELLOW)
+            fg = getattr(ANSIForeground, mark_col.upper(), col.FG_YELLOW)
+            bg = getattr(ANSIForeground, mark_col.upper(), col.FG_YELLOW)
 
             if is_diff:
-                return bg + Fore.RED + hex_b + Fore.RESET + Back.RESET
-            return fg + hex_b + Fore.RESET
+                return bg + col.FG_RED + hex_b + col.RESET
+            return fg + hex_b + col.RESET
         if is_diff:
-            return Fore.RED + hex_b + Fore.RESET
+            return col.FG_RED + hex_b + col.RESET
         if b == 0:
-            return Fore.BLACK + "00" + Fore.RESET
+            return col.FG_DARK + "00" + col.RESET
         return hex_b
 
     def _format_standard_line(self, data_row: int) -> str:
@@ -227,11 +227,11 @@ class HexViewer:
             if b1 is not None:
                 line_1_parts.append(self._format_byte(b1, is_diff, mark_col))
                 char_1 = chr(b1) if 32 <= b1 <= 126 else "."
-                ascii_1_parts.append(Fore.RED + char_1 + Fore.RESET if is_diff else char_1)
+                ascii_1_parts.append(col.FG_RED + char_1 + col.RESET if is_diff else char_1)
             if b2 is not None:
                 line_2_parts.append(self._format_byte(b2, is_diff, mark_col))
                 char_2 = chr(b2) if 32 <= b2 <= 126 else "."
-                ascii_2_parts.append(Fore.RED + char_2 + Fore.RESET if is_diff else char_2)
+                ascii_2_parts.append(col.FG_RED + char_2 + col.RESET if is_diff else char_2)
 
         vis_len_1 = len(chunk_1) * 3 - 1 if chunk_1 else 0
         vis_len_2 = len(chunk_2) * 3 - 1 if chunk_2 else 0
@@ -286,11 +286,11 @@ class HexViewer:
             if b1 is not None:
                 line_1_parts.append(self._format_byte(b1, is_diff, mark_col_1))
                 char1 = chr(b1) if 32 <= b1 <= 126 else "."
-                ascii_1_parts.append(Fore.RED + char1 + Fore.RESET if is_diff else char1)
+                ascii_1_parts.append(col.FG_RED + char1 + col.RESET if is_diff else char1)
             if b2 is not None:
                 line_2_parts.append(self._format_byte(b2, is_diff, mark_col_2))
                 char2 = chr(b2) if 32 <= b2 <= 126 else "."
-                ascii_2_parts.append(Fore.RED + char2 + Fore.RESET if is_diff else char2)
+                ascii_2_parts.append(col.FG_RED + char2 + col.RESET if is_diff else char2)
 
         vis_len_1 = len(chunk_1) * 3 - 1 if chunk_1 else 0
         vis_len_2 = len(chunk_2) * 3 - 1 if chunk_2 else 0
@@ -326,9 +326,9 @@ class HexViewer:
                 if i < len(selfhex_commons.SELFHEX_SMALL_MSG):
                     line = selfhex_commons.SELFHEX_SMALL_MSG[i]
                     if console_size.columns < min_size[0]:
-                        line = line.replace("%C", col_str("%C", Fore.LIGHTRED_EX))
+                        line = line.replace("%C", col_str("%C", col.FG_RED_EX))
                     if console_size.lines < min_size[1]:
-                        line = line.replace("%L", col_str("%L", Fore.LIGHTRED_EX))
+                        line = line.replace("%L", col_str("%L", col.FG_RED_EX))
                     line = line.replace("%C", str(console_size.columns)).replace("%L", str(console_size.lines))
                     buf.append(f"{self._center_line(line)}\x1b[K\n")
                 else:
@@ -356,7 +356,7 @@ class HexViewer:
                     else:
                         if idx == total_view_lines + console_size.lines - 6:
                             buf.append(f"{self._center_line(col_str(
-                                '(woah... it\'s so empty down here...)', Fore.LIGHTBLACK_EX))}\x1b[K\n")
+                                '(woah... it\'s so empty down here...)', col.FG_DARK_EX))}\x1b[K\n")
                             continue
                         buf.append(f"\x1b[K\n")
                 else:
@@ -581,9 +581,9 @@ class HexViewer:
         ver = selfhex_commons.SELFHEX_VERSION
         code = selfhex_commons.SELFHEX_VERCODE
 
-        self.message = (f"{col_str('selfhex', Fore.LIGHTGREEN_EX)}"
-                        f" {col_str(f'v{ver}', Fore.LIGHTYELLOW_EX)} ({col_str(code, Fore.LIGHTYELLOW_EX)})"
-                        f" | made with {col_str('♥', Fore.RED)} by quantum")
+        self.message = (f"{col_str('selfhex', col.FG_GREEN_EX)}"
+                        f" {col_str(f'v{ver}', col.FG_YELLOW_EX)} ({col_str(code, col.FG_YELLOW_EX)})"
+                        f" | made with {col_str('♥', col.FG_RED_EX)} by quantum")
         return
 
     def cmd_new(self, args):
@@ -881,21 +881,20 @@ class HexViewer:
             self.message = f"Marks set: {len(self.marks)} | Pages: 1/{len(self.mark_pages)}"
             return
 
-        name = args[0]
         try:
-            page = int(name, 0)
+            page = int(args[0], 0)
             page_idx = max(1, min(page, len(self.mark_pages)))
             page_content = self.mark_pages[page_idx]
             self.message = page_content
             return
         except ValueError:
-            name = self.get_mark_name(name)
+            name = self.get_mark_name(args[0])
 
         col: str | None = None
         nums = []
 
         for arg in args[1:]:
-            if hasattr(Fore, arg.upper()):
+            if hasattr(ANSIForeground, arg.upper()):
                 col = arg.upper()
             else:
                 try:
@@ -909,9 +908,9 @@ class HexViewer:
                         pass
 
         if not nums:
-            offset = self.current_line * self.bytes_per_line
+            offset = (self.current_line - 1) * self.bytes_per_line
         else:
-            offset = nums[0]
+            offset = max(0, nums[0])
 
         mark_len = self.bytes_per_line
         if len(nums) > 1:
