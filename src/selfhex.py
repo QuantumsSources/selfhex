@@ -122,6 +122,10 @@ def main(sys_args: list[str]):
             return
 
     make_clone = "c" in option_str or "clone" in args and args["clone"].lower() in ("", "true", "yes", "y", "1")
+    if make_clone and not files:
+        print("selfhex: error: -c requires a file")
+        return
+
     keep_clone = "keep-clone" in args and args["keep-clone"].lower() in ("", "true", "yes", "y", "1")
     try:
         if len(files) == 1:
