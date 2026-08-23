@@ -16,12 +16,12 @@ Made with ♥ by quantum.
 
 ## Features
 ### Custom-built terminal interface
-- Brand-new interface made from the ground up.
+- Brand-new interface made from the ground up, with no external dependencies.
 - _Vim-like-ish_ command system.
 
 ### Self-diffing capable
 - Clone a file with the `:c[ln]` command; <sub>(selfhex will clean it automatically when it's unloaded, or you quit)</sub>
-- Diff two files, or a file with itself;
+- Diff two files, or a file with itself with the `:d[iff]` command;
 - Diff different regions of the same file, or different files;
 
 ### Marks & findings
@@ -43,19 +43,20 @@ To run selfhex, you'll need:
 > 2. Use `pipx` (on Arch, `sudo pacman -S python-pipx`) to install `pyinstaller`. See below.
 
 ## Installation
-Clone the repository, then run `build.py`, like this:
+If you're using `pipx`, run this:
 ```bash
 # only if you're using pipx:
 pipx install pyinstaller
 pipx ensurepath
 ```
+Then, clone the repository, and run `build.py`, like this:
 ```bash
 git clone https://github.com/QuantumsSources/selfhex.git
 cd selfhex
 python3 build.py
 ```
 This will compile selfhex, link the binary to `~/.local/bin/selfhex`, and adds a desktop entry.
-Afterward, you can either reboot, or update the desktop database.
+Afterward, you can either reboot, or update the desktop database (and icon cache).
 
 ## Usage
 ### Command line
@@ -66,7 +67,7 @@ Afterward, you can either reboot, or update the desktop database.
 ### Interactive interface
 - For only **$0.00**, everything above, _plus_...
 - Load your files with the `:l[d]` command, or clone with `:c[ln]`;
-- Need help? Run `:h[lp]` with either a page, or a command;
+- Need help? Run `:h[elp]` with either a page, or a command;
 
 ## Notes
 - The icon for selfhex is ~~stolen~~ _borrowed_ from Sonic the Hedgehog 3.<br/>Original sprite by SEGA and Sonic Team, with minimal edits by me.

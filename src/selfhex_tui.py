@@ -6,7 +6,7 @@ import sys
 import mmap
 import termios
 import selfhex_commons
-from ansicodelib import ANSIForeground, ANSIColors as col
+from ansicodelib import ANSIForeground, ANSIBackground, ANSIColors as col
 from selfhex_commons import col_str, log
 
 def get_slice(mm: mmap.mmap | None, offset: int, length: int) -> bytes:
@@ -185,7 +185,7 @@ class HexViewer:
 
         if mark_col:
             fg = getattr(ANSIForeground, mark_col.upper(), col.FG_YELLOW)
-            bg = getattr(ANSIForeground, mark_col.upper(), col.FG_YELLOW)
+            bg = getattr(ANSIBackground, mark_col.upper(), col.BG_YELLOW)
 
             if is_diff:
                 return bg + col.FG_RED + hex_b + col.RESET
