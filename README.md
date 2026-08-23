@@ -7,6 +7,10 @@
 A _self-diffing_ capable hex viewer.  
 Made with ♥ by quantum.
 
+<img src="assets/diff_example.png" alt="selfhex diffing 0x2000 with 0x4000 of the same file" width="900">
+<br>
+<sub>selfhex diffing 0x2000 with 0x4000 of the same file</sub>
+
 </div>
 
 > [!important]
@@ -15,14 +19,13 @@ Made with ♥ by quantum.
 > Sorry, not sorry, Windows people. </3
 
 ## Features
+### Self-diffing capable
+- Clone a file with the `:c[ln]` command; <sub>(selfhex will clean it automatically when it's unloaded, or you quit)</sub>
+- Diff two files, or different regions of the same file with the `:d[iff]` command;
+
 ### Custom-built terminal interface
 - Brand-new interface made from the ground up, with no external dependencies.
 - _Vim-like-ish_ command system.
-
-### Self-diffing capable
-- Clone a file with the `:c[ln]` command; <sub>(selfhex will clean it automatically when it's unloaded, or you quit)</sub>
-- Diff two files, or a file with itself with the `:d[iff]` command;
-- Diff different regions of the same file, or different files;
 
 ### Marks & findings
 - Locate hex strings quickly with the `:f[n]` command;
@@ -31,9 +34,20 @@ Made with ♥ by quantum.
 ## Requirements
 To run selfhex, you'll need:
 - Python v3.9+, for everything;
-- `pyinstaller`, to compile it;
-- If `pip` doesn't work, read note below;
 - That's it;
+
+## Installation
+You don't _really_ need to install **selfhex**, you can just clone the repository and run it directly:
+```bash
+git clone https://github.com/QuantumsSources/selfhex.git
+cd selfhex
+python3 src/selfhex.py
+```
+
+Optionally (but recommended), you can install it:
+You'll need one thing:
+- `pyinstaller`, to compile it; <sub>(If `pip` doesn't work, see the note below)</sub>
+- This list has two bullet points, but you only had to read the first;
 
 > [!note]
 > On some Linux distributions (Arch, mainly, btw), `pip` cannot directly install `pyinstaller` due to PEP 668.
@@ -42,20 +56,20 @@ To run selfhex, you'll need:
 > 1. Force `pip` to do it against its will: `pip install pyinstaller --break-system-packages`;
 > 2. Use `pipx` (on Arch, `sudo pacman -S python-pipx`) to install `pyinstaller`. See below.
 
-## Installation
-If you're using `pipx`, run this:
-```bash
-# only if you're using pipx:
-pipx install pyinstaller
-pipx ensurepath
-```
-Then, clone the repository, and run `build.py`, like this:
+> [!important]
+>  If you're using `pipx`, run this:
+> ```bash
+> # only if you're using pipx:
+> pipx install pyinstaller
+> pipx ensurepath
+> ```
+Then, clone the repository (if you haven't already), and run `build.py`, like this:
 ```bash
 git clone https://github.com/QuantumsSources/selfhex.git
 cd selfhex
 python3 build.py
 ```
-This will compile selfhex, link the binary to `~/.local/bin/selfhex`, and adds a desktop entry.
+This will compile selfhex, link the binary to `~/.local/bin/selfhex`, and add a desktop entry.
 Afterward, you can either reboot, or update the desktop database (and icon cache).
 
 ## Usage
