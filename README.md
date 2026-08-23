@@ -45,10 +45,11 @@ To run selfhex, you'll need:
 ## Installation
 Clone the repository, then run `build.py`, like this:
 ```bash
-# If you're using pipx:
+# only if you're using pipx:
 pipx install pyinstaller
 pipx ensurepath
-
+```
+```bash
 git clone https://github.com/QuantumsSources/selfhex.git
 cd selfhex
 python3 build.py
