@@ -10,7 +10,7 @@ Made with ♥ by quantum.
 </div>
 
 > [!important]
-> Currently, due to _heavy, unsupervised_ usage of `termios` and `tty`, selfhex only works on Linux!  
+> Currently, due to _heavy, unsupervised_ usage of `termios` and `tty`, selfhex only works on Linux! <sub>(and Android)</sub>  
 > This limitation is expected to stay for the foreseeable future.  
 > Sorry, not sorry, Windows people. </3
 
