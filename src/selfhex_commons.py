@@ -9,7 +9,7 @@ import random
 import termios
 from ansicodelib import ANSIColors as col
 
-SELFHEX_VERSION = "1.20.7+2"
+SELFHEX_VERSION = "1.20.8"
 SELFHEX_VERCODE = "Painter"
 MIN_TERMINAL_SIZE = (80, 20)
 FAST_SCROLL_OFFSET = 128
@@ -87,7 +87,7 @@ COMMAND_HELP = {
     "f":  "f[n] (<hex>|<str>): search for hex sequence or text in file 1",
     "j":  "j[mp] ([+-]<offset>|<mark>): jump to abs/rel offset or mark",
     "m":  "m[rk] [<name> [<col>] [<off> [<len>]]]: place a mark at given offset",
-    "um":  "um[k] <name>: clear a mark",
+    "um": "um[k] <name>: clear a mark",
     "l":  "l[d] <file>: load a file into next free slot",
     "u":  "u[ld] [1|2]: unload slot 1, 2, or both",
     "sw": "sw[ap]: swap files in slot 1 and slot 2",
@@ -256,7 +256,7 @@ def parse_file_size(size_str: str) -> int:
     return int(number * multiplier)
 
 def get_rand_color() -> str:
-    PALETTE = ["CYAN", "MAGENTA", "YELLOW", "GREEN", "BLUE", "LIGHTWHITE_EX"]
+    PALETTE = ["FG_CYAN", "FG_MAGENTA", "FG_YELLOW", "FG_GREEN", "FG_BLUE", "FG_WHITE_EX"]
     return random.choice(PALETTE)
 
 close_log_file_path: str = ""

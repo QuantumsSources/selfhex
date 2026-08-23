@@ -24,13 +24,13 @@ def get_args(sys_args: list[str]) -> tuple[list[str], str, dict[str, str]]:
             files.append(arg)
     return files, option_str, dashed_args
 
-def run_selfhex(file_1: str | None = None, file_2: str | None = None):
+def run_selfhex(file_1: str | None = None, file_2: str | None = None, width: int = 8):
     sys.stdout.write("\033[?1049h")
     sys.stdout.flush()
     print("\033[H", end="")
     result = None
     try:
-        result = selfhex_tui.main(file_1, file_2)
+        result = selfhex_tui.main(file_1, file_2, width)
     except KeyboardInterrupt:
         return
     finally:
@@ -81,6 +81,7 @@ def main(sys_args: list[str]):
         print(col_str("--new", col.FG_YELLOW_EX) + "=<name>: create new file")
         print("     " + col_str("--force", col.FG_YELLOW_EX) + ": overwrite file if it already exists")
         print("     " + col_str("--size", col.FG_YELLOW_EX) + "=<size>: specify file size")
+        print(col_str("--width", col.FG_YELLOW_EX) + "=<width>: set bytes per line width on startup")
         print(col_str("--clear-logs", col.FG_YELLOW_EX) + ": clear logs folder")
         print(col_str("--show-logs", col.FG_YELLOW_EX) + ": print log folder location")
         return
@@ -90,9 +91,9 @@ def main(sys_args: list[str]):
         code = selfhex_commons.SELFHEX_VERCODE
 
         print(f"{col_str('selfhex', col.FG_GREEN_EX)}"
-                        f" {col_str(f'v{ver}', col.FG_YELLOW_EX)} ({col_str(code, col.FG_YELLOW_EX)})"
-                        f" - self-diffing capable hex viewer"
-                        f" | made with {col_str('♥', col.FG_RED_EX)} by quantum")
+              f" {col_str(f'v{ver}', col.FG_YELLOW_EX)} ({col_str(code, col.FG_YELLOW_EX)})"
+              f" - self-diffing capable hex viewer"
+              f" | made with {col_str('♥', col.FG_RED_EX)} by quantum")
         return
 
     if "new" in args:
@@ -121,6 +122,13 @@ def main(sys_args: list[str]):
         if not check_file(f):
             return
 
+    width: str|int = args["width"] if "width" in args else "8"
+    try:
+        width: int = int(str(width), 0)
+    except ValueError:
+        print(f"selfhex: error: invalid width value: {width}")
+        width: int = 8
+
     make_clone = "c" in option_str or "clone" in args and args["clone"].lower() in ("", "true", "yes", "y", "1")
     if make_clone and not files:
         print("selfhex: error: -c requires a file")
@@ -128,22 +136,24 @@ def main(sys_args: list[str]):
 
     keep_clone = "keep-clone" in args and args["keep-clone"].lower() in ("", "true", "yes", "y", "1")
     try:
-        if len(files) == 1:
+        if not files:
+            run_selfhex(None, None, width)
+        elif len(files) == 1:
             if make_clone:
                 print("selfhex: info: cloning file 1 for self-diffing")
                 temp_file = selfhex_commons.store_temp_file(files[0])
-                run_selfhex(temp_file, files[0])
+                run_selfhex(temp_file, files[0], width)
             else:
-                run_selfhex(files[0], None)
+                run_selfhex(files[0], None, width)
         else:
             same_file = os.path.samefile(files[0], files[1])
             if same_file:
                 temp_file = selfhex_commons.store_temp_file(files[0])
-                run_selfhex(temp_file, files[0])
+                run_selfhex(temp_file, files[0], width)
                 return
             elif make_clone:
                 print("selfhex: warning: --clone is ignored when two files are provided.")
-            run_selfhex(files[0], files[1])
+            run_selfhex(files[0], files[1], width)
     except Exception as e:
         print(f"selfhex: error: an error occurred running selfhex")
         print(f"selfhex: error: {e}")
