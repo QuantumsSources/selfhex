@@ -30,7 +30,6 @@ def run_selfhex(file_1: str | None = None, file_2: str | None = None):
     print("\033[H", end="")
     result = None
     try:
-        print("selfhex: Loading selfhex. Please wait.")
         result = selfhex_tui.main(file_1, file_2)
     except KeyboardInterrupt:
         return
