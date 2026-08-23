@@ -9,7 +9,7 @@ import random
 import termios
 from ansicodelib import ANSIColors as col
 
-SELFHEX_VERSION = "1.20.8"
+SELFHEX_VERSION = "1.20.8+1"
 SELFHEX_VERCODE = "Painter"
 MIN_TERMINAL_SIZE = (80, 20)
 FAST_SCROLL_OFFSET = 128

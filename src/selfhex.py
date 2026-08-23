@@ -56,34 +56,25 @@ def main(sys_args: list[str]):
         run_selfhex(None, None)
         return
 
-    if "clear-logs" in args:
-        if os.path.exists(selfhex_commons.LOG_FOLDER):
-            for f in os.listdir(selfhex_commons.LOG_FOLDER):
-                os.remove(os.path.join(selfhex_commons.LOG_FOLDER, f))
-            os.rmdir(selfhex_commons.LOG_FOLDER)
-        return
-
-    if "show-logs" in args:
-        print(f"selfhex: info: log folder location is {selfhex_commons.LOG_FOLDER}")
-        return
-
     if "help" in args or "h" in option_str:
         print("usage: selfhex [<OPTION>] [<file_1> [<file_2>]] [<ARGS>]")
         print("OPTION:")
-        print(col_str("-h", col.FG_GREEN_EX) + ": print this help")
-        print(col_str("-v", col.FG_GREEN_EX) + ": print version information")
+        print(col_str("* ", col.FG_RED) + col_str("-h", col.FG_GREEN_EX) + ": print this help")
+        print(col_str("* ", col.FG_RED) + col_str("-v", col.FG_GREEN_EX) + ": print version information")
         print(col_str("-c", col.FG_GREEN_EX) + ": clone file 1 for self-diffing. is overridden if file 2 is set.")
         print("ARGS:")
-        print(col_str("--help", col.FG_YELLOW_EX) + ": same as -h")
-        print(col_str("--version", col.FG_YELLOW_EX) + ": same as -v")
+        print(col_str("* ", col.FG_RED) + col_str("--help", col.FG_YELLOW_EX) + ": same as -h")
+        print(col_str("* ", col.FG_RED) + col_str("--version", col.FG_YELLOW_EX) + ": same as -v")
         print(col_str("--clone", col.FG_YELLOW_EX) + ": same as -c")
         print("     " + col_str("--keep-clone", col.FG_YELLOW_EX) + ": keep clone file after exit")
         print(col_str("--new", col.FG_YELLOW_EX) + "=<name>: create new file")
         print("     " + col_str("--force", col.FG_YELLOW_EX) + ": overwrite file if it already exists")
         print("     " + col_str("--size", col.FG_YELLOW_EX) + "=<size>: specify file size")
         print(col_str("--width", col.FG_YELLOW_EX) + "=<width>: set bytes per line width on startup")
-        print(col_str("--clear-logs", col.FG_YELLOW_EX) + ": clear logs folder")
-        print(col_str("--show-logs", col.FG_YELLOW_EX) + ": print log folder location")
+        print(col_str("* ", col.FG_RED) + col_str("--clear-logs", col.FG_YELLOW_EX) + ": clear logs folder")
+        print(col_str("* ", col.FG_RED) + col_str("--show-logs", col.FG_YELLOW_EX) + ": print log folder location")
+        print("\nOPTIONS and ARGS marked with " + col_str("*", col.FG_RED) + " will exit early.")
+        print("priority goes from top to bottom of this list.")
         return
 
     if "version" in args or "v" in option_str:
@@ -94,6 +85,17 @@ def main(sys_args: list[str]):
               f" {col_str(f'v{ver}', col.FG_YELLOW_EX)} ({col_str(code, col.FG_YELLOW_EX)})"
               f" - self-diffing capable hex viewer"
               f" | made with {col_str('♥', col.FG_RED_EX)} by quantum")
+        return
+
+    if "clear-logs" in args:
+        if os.path.exists(selfhex_commons.LOG_FOLDER):
+            for f in os.listdir(selfhex_commons.LOG_FOLDER):
+                os.remove(os.path.join(selfhex_commons.LOG_FOLDER, f))
+            os.rmdir(selfhex_commons.LOG_FOLDER)
+        return
+
+    if "show-logs" in args:
+        print(f"selfhex: info: log folder location is {selfhex_commons.LOG_FOLDER}")
         return
 
     if "new" in args:
