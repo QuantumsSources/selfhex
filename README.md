@@ -1,4 +1,4 @@
- <div align="center">
+<div align="center">
 
 # selfhex
 **the only hex viewer starting at version 1.19.10+3**  
@@ -64,7 +64,7 @@ Afterward, you can either reboot, or update the desktop database.
 - And even create new files with `selfhex --new=<name> --size=<size>`;
 
 ### Interactive interface
-- For only $0.00, everything above, _plus_...
+- For only **$0.00**, everything above, _plus_...
 - Load your files with the `:l[d]` command, or clone with `:c[ln]`;
 - Need help? Run `:h[lp]` with either a page, or a command;
 
