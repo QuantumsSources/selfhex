@@ -3,6 +3,10 @@ import shutil
 import subprocess
 from pathlib import Path
 
+if sys.platform not in ("linux", "android"):
+    print("error: currently selfhex only works on linux!")
+    sys.exit(1)
+
 if sys.version_info < (3, 9):
     print("error: selfhex requires Python 3.9 or higher to build.")
     sys.exit(1)
