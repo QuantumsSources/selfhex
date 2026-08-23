@@ -534,10 +534,16 @@ class HexViewer:
         elif cmd in ("l", "ld", "load"):
             self.cmd_load(args)
         elif cmd in ("u", "uld", "unload"):
+            if not self._has_files():
+                self.message = "Please load a file before using the u[ld] command."
+                return
             self.cmd_unload(args)
         elif cmd in ("n", "new"):
             self.cmd_new(args)
         elif cmd in ("sw", "swap"):
+            if not self._has_files():
+                self.message = "Please load a file before using the sw[ap] command."
+                return
             self.cmd_swap()
         elif cmd in ("d", "diff"):
             if not self._has_files():
