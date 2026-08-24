@@ -85,3 +85,5 @@ Afterward, you can either reboot, or update the desktop database (and icon cache
 
 ## Notes
 - The icon for selfhex is ~~stolen~~ _borrowed_ from Sonic the Hedgehog 3.<br/>Original sprite by SEGA and Sonic Team, with minimal edits by me.
+
+<img src="assets/selfhex_eof.png" alt="(woah... it's so empty down here)" width="900">
