@@ -7,7 +7,7 @@
 A _self-diffing_ capable hex viewer.  
 Made with ♥ by quantum.
 
-<img src="assets/diff_example.png" alt="selfhex diffing 0x2000 with 0x4000 of the same file" width="900">
+<img alt="selfhex diffing 0x2000 with 0x4000 of the same file" src="assets/diff_example.png"/>
 <br>
 <sub>selfhex diffing 0x2000 with 0x4000 of the same file</sub>
 
@@ -53,7 +53,7 @@ You'll need one thing:
 > On some Linux distributions (Arch, mainly, btw), `pip` cannot directly install `pyinstaller` due to PEP 668.
 > 
 > To install it, you can either:
-> 1. Force `pip` to do it against its will: `pip install pyinstaller --break-system-packages`;
+> 1. Force `pip` to do it against its will _(please don't)_: `pip install pyinstaller --break-system-packages`;
 > 2. Use `pipx` (on Arch, `sudo pacman -S python-pipx`) to install `pyinstaller`. See below.
 
 > [!important]
@@ -86,4 +86,4 @@ Afterward, you can either reboot, or update the desktop database (and icon cache
 ## Notes
 - The icon for selfhex is ~~stolen~~ _borrowed_ from Sonic the Hedgehog 3.<br/>Original sprite by SEGA and Sonic Team, with minimal edits by me.
 
-<img src="assets/selfhex_eof.png" alt="(woah... it's so empty down here)" width="900">
+<img src="assets/selfhex_eof.png" alt="(woah... it's so empty down here)">
