@@ -10,7 +10,7 @@ import termios
 from types import TracebackType
 from ansicodelib import ANSIColors as col
 
-SELFHEX_VERSION = "1.20.9"
+SELFHEX_VERSION = "1.20.9+1"
 SELFHEX_VERCODE = "Painter"
 MIN_TERMINAL_SIZE = (80, 20)
 FAST_SCROLL_OFFSET = 128
@@ -296,13 +296,21 @@ def log_init():
     open(close_log_file_path, "w").close()
     open(latest_log_file_path, "w").close()
 
-    log("INFO", f"Logging started.")
+    log_info("Logging started.")
+    if len(os.listdir(LOG_FOLDER)) > 250:
+        oldest_file = None, time.time()
+        for file in os.listdir(LOG_FOLDER):
+            file_path = os.path.join(LOG_FOLDER, file)
+            if os.path.getmtime(file_path) < oldest_file[1]:
+                oldest_file = file_path, os.path.getmtime(file_path)
+        os.remove(oldest_file[0])
+        log_info(f"Cleared oldest log file {oldest_file[0]}! Consider running --clear-logs!")
 
 def log_stop():
     if close_log_file_path == "" or latest_log_file_path == "":
         return
-    log("INFO", f"Transferring logs to {close_log_file_path}")
-    log("INFO", "Stopping logs")
+    log_info(f"Transferring logs to {close_log_file_path}")
+    log_info("Stopping logs")
 
     try:
         with open(latest_log_file_path, "rb") as src, open(close_log_file_path, "wb") as dst:

@@ -510,7 +510,7 @@ class HexViewer:
 
         raw_input = self._read_raw_line(prompt=":")
         if raw_input is None:
-            log_warn("CTRL+C or ESC mid prompt")
+            log_warn("CTRL+C, ESC, or terminal resize mid prompt!")
             return
 
         cmd_line = raw_input.strip()
