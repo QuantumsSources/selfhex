@@ -7,9 +7,10 @@ import time
 import select
 import random
 import termios
+from types import TracebackType
 from ansicodelib import ANSIColors as col
 
-SELFHEX_VERSION = "1.20.8+2"
+SELFHEX_VERSION = "1.20.9"
 SELFHEX_VERCODE = "Painter"
 MIN_TERMINAL_SIZE = (80, 20)
 FAST_SCROLL_OFFSET = 128
@@ -273,6 +274,15 @@ def log(level: str, message: str):
     except Exception as e:
         sys.stderr.write(f"Logging error: {e}\n")
 
+def log_info(message: str):
+    log("INFO", message)
+
+def log_warn(message: str):
+    log("WARN", message)
+
+def log_err(message: str):
+    log("ERROR", message)
+
 def log_init():
     global close_log_file_path, latest_log_file_path
 
@@ -299,3 +309,16 @@ def log_stop():
             dst.write(src.read())
     except Exception as e:
         sys.stderr.write(f"Log transfer error: {e}\n")
+
+def get_traceback_lines(tb: TracebackType | None) -> list[str]:
+    if tb is None:
+        return []
+
+    lines = []
+    _tb = tb
+    while True:
+        lines.append(str(_tb.tb_lineno))
+        if _tb.tb_next is None:
+            break
+        _tb = _tb.tb_next
+    return lines

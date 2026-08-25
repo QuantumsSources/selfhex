@@ -1,13 +1,15 @@
 from __future__ import annotations
 import os
 import re
+import select
 import tty
 import sys
 import mmap
+import signal
 import termios
 import selfhex_commons
 from ansicodelib import ANSIForeground, ANSIBackground, ANSIColors as col
-from selfhex_commons import col_str, log
+from selfhex_commons import col_str, log_info, log_warn, log_err
 
 def get_slice(mm: mmap.mmap | None, offset: int, length: int) -> bytes:
     if not mm or offset >= len(mm):
@@ -25,6 +27,9 @@ def open_mmap(path: str | None):
     f = open(path, "rb")
     mm = mmap.mmap(f.fileno(), length=0, access=mmap.ACCESS_READ)
     return f, mm, size
+
+class TerminalResized(Exception):
+    pass
 
 class HexViewer:
     def __init__(self, file_1_path: str | None = None, file_2_path: str | None = None, bytes_per_line: int = 8):
@@ -108,10 +113,10 @@ class HexViewer:
                 self.message = msg + msg_size
             else:
                 self.message = msg
-            log("INFO", "Files reloaded successfully!")
+            log_info("Files reloaded successfully!")
         except Exception as e:
             self.message = f"Error loading files: {e}"
-            log("ERROR", f"Error loading files: {e}")
+            log_err(f"Error loading files: {e}")
 
     @property
     def total_data_lines(self) -> int:
@@ -404,10 +409,13 @@ class HexViewer:
         except ValueError:
             return int(token, 16)
 
-    @staticmethod
-    def _read_raw_line(prompt: str = ":") -> str | None:
+    def _read_raw_line(self, prompt: str = ":") -> str | None:
         fd = sys.stdin.fileno()
         old_settings = termios.tcgetattr(fd)
+
+        def _on_sigwinch(_, __):
+            raise TerminalResized()
+        old_handler = signal.signal(signal.SIGWINCH, _on_sigwinch)
 
         sys.stdout.write(f"\r\x1b[K{prompt}")
         sys.stdout.flush()
@@ -416,26 +424,35 @@ class HexViewer:
         try:
             tty.setcbreak(fd)
             while True:
-                char = sys.stdin.read(1)
+                try:
+                    r, _, _ = select.select([sys.stdin], [], [], 0.2)
+                    if not r:
+                        continue
+                    char = sys.stdin.read(1)
+                except TerminalResized:
+                    self.render()
+                    if not self.fits:
+                        return None
+                    sys.stdout.write(f"\r\x1b[K{prompt}{''.join(buf)}")
+                    sys.stdout.flush()
+                    continue
 
                 if char in ('\r', '\n'):
                     break
-
                 elif char in ('\x03', '\x1b'):
                     return None
-
                 elif char in ('\x7f', '\x08'):
                     if buf:
                         buf.pop()
                         sys.stdout.write("\b \b")
                         sys.stdout.flush()
-
                 elif 32 <= ord(char) <= 126:
                     buf.append(char)
                     sys.stdout.write(char)
                     sys.stdout.flush()
         finally:
             termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+            signal.signal(signal.SIGWINCH, old_handler)
         return "".join(buf)
 
     def _has_files(self) -> bool:
@@ -493,7 +510,7 @@ class HexViewer:
 
         raw_input = self._read_raw_line(prompt=":")
         if raw_input is None:
-            log("WARN", "CTRL+C or ESC mid prompt")
+            log_warn("CTRL+C or ESC mid prompt")
             return
 
         cmd_line = raw_input.strip()
@@ -564,7 +581,7 @@ class HexViewer:
             self.cmd_ver()
         else:
             self.message = f"Unknown command: ':{cmd}'."
-            log("ERROR", f"Unknown command: ':{cmd}'")
+            log_err(f"Unknown command: ':{cmd}'")
 
     def cmd_help(self, args):
         if not args:
@@ -583,7 +600,7 @@ class HexViewer:
                     self.message = selfhex_commons.COMMAND_HELP.get(command)
                 else:
                     self.message = f"Invalid page no. or command: {args[0]}"
-                    log("ERROR", f"h[elp]: Invalid page no. or command: {args[0]}")
+                    log_err(f"h[elp]: Invalid page no. or command: {args[0]}")
                 return
             page_idx = max(1, min(args[0], len(selfhex_commons.HELP_PAGES)))
             page_content = selfhex_commons.HELP_PAGES[page_idx]
@@ -604,7 +621,7 @@ class HexViewer:
             return
         if self.file_1_path and self.file_2_path:
             self.message = "No free slots to create file! Run u[ld]!"
-            log("WARN", "n[ew]: Tried to create file with no free slots")
+            log_warn("n[ew]: Tried to create file with no free slots")
             return
 
         file_name = args[0]
@@ -618,16 +635,16 @@ class HexViewer:
                 pass
         if not selfhex_commons.create_new_file(file_name, size, force):
             self.message = f"Failed to create new file {file_name}"
-            log("WARN", f"n[ew]: Failed to create new file {file_name}")
+            log_warn(f"n[ew]: Failed to create new file {file_name}")
             return
 
         self.cmd_load([file_name])
-        log("INFO", f"n[ew]: Created and loaded new file {file_name}")
+        log_info(f"n[ew]: Created and loaded new file {file_name}")
 
     def cmd_clone(self):
         if self.file_1_path and self.file_2_path:
             self.message = "No free slots to clone file! Run u[ld]!"
-            log("WARN", "c[ln]: Tried to clone file with no free slots")
+            log_warn("c[ln]: Tried to clone file with no free slots")
             return
         if not self.file_1_path:
             return
@@ -636,7 +653,7 @@ class HexViewer:
         self.created_clones.append(temp_file)
         self.reload_files()
         self.message = "Cloned slot 1 into slot 2"
-        log("INFO", f"c[ln]: Cloned {self.file_1_path} into {self.file_2_path}")
+        log_info(f"c[ln]: Cloned {self.file_1_path} into {self.file_2_path}")
         return
 
     def cmd_stretch(self, args):
@@ -647,7 +664,7 @@ class HexViewer:
             new_width = self._parse_offset(args[0])
             if new_width <= 0:
                 self.message = "Width must be greater than 0."
-                log("WARN", "s[tr]: Attempt to set view width to non-positive value")
+                log_warn("s[tr]: Attempt to set view width to non-positive value")
                 return
 
             current_byte_offset = (self.current_line - 1) * self.bytes_per_line
@@ -656,14 +673,14 @@ class HexViewer:
             self.current_line = (current_byte_offset // self.bytes_per_line) + 1
             self.message = (f"View width set to {self.bytes_per_line} byte"
                             f"{'' if self.bytes_per_line == 1 else 's'} per line")
-            log("INFO", f"s[tr]: Set view width to {self.bytes_per_line} byte"
+            log_info(f"s[tr]: Set view width to {self.bytes_per_line} byte"
                         f"{'' if self.bytes_per_line == 1 else 's'} per line")
         except Exception as e:
             if "\x1b" in args[0]:
                 self.message = "no"
             else:
                 self.message = f"Invalid width value: {repr(args[0])}"
-            log("WARN", f"s[tr]: Invalid width value: {repr(args[0])} ({e})")
+            log_warn(f"s[tr]: Invalid width value: {repr(args[0])} ({e})")
 
     def cmd_load(self, args):
         if not args:
@@ -671,24 +688,24 @@ class HexViewer:
             return
         if not os.path.isfile(args[0]):
             self.message = f"File not found: {args[0]}"
-            log("ERROR", f"l[d]: File not found: {args[0]}")
+            log_err(f"l[d]: File not found: {args[0]}")
             return
         if not self.file_1_path:
             self.file_1_path = args[0]
-            log("INFO", f"l[d]: Loading file {self.file_1_path}")
+            log_info(f"l[d]: Loading file {self.file_1_path}")
             self.cmd_diff(["off"])
             self.reload_files()
         elif not self.file_2_path:
             self.file_2_path = args[0]
             if self.file_1_path == self.file_2_path:
                 self.file_2_path = selfhex_commons.store_temp_file(args[0])
-                log("INFO", f"l[d]: Clone file {args[0]} into slot 2")
-            log("INFO", f"l[d]: Loading file {self.file_2_path}")
+                log_info(f"l[d]: Clone file {args[0]} into slot 2")
+            log_info(f"l[d]: Loading file {self.file_2_path}")
             self.cmd_diff(["off"])
             self.reload_files()
         else:
             self.message = "No free slots to open file! Run u[ld]!"
-            log("WARN", "l[d]: Tried to load file with no free slots")
+            log_warn("l[d]: Tried to load file with no free slots")
 
     def cmd_unload(self, args):
         if not args:
@@ -698,7 +715,7 @@ class HexViewer:
                 selfhex_commons.remove_temp_file(clone)
 
             self.cmd_diff(["off"])
-            log("INFO", "u[ld]: Unloading all files")
+            log_info("u[ld]: Unloading all files")
             self.reload_files()
             self.message = "Unloaded all files."
             return
@@ -708,62 +725,62 @@ class HexViewer:
                 raise ValueError
         except ValueError:
             self.message = f"Invalid slot: {args[0]}"
-            log("ERROR", f"u[ld]: Tried unloading invalid slot {str(args[0])}")
+            log_err(f"u[ld]: Tried unloading invalid slot {str(args[0])}")
             return
 
         if args[0] == 1:
             if not self.file_1_path:
                 self.message = "No file in slot 1!"
-                log("WARN", "u[ld]: No file to unload in slot 1.")
+                log_warn("u[ld]: No file to unload in slot 1.")
                 return
             if self.file_1_path in self.created_clones:
                 selfhex_commons.remove_temp_file(self.file_1_path)
-                log("INFO", f"u[ld]: Removing clone {self.file_1_path}")
+                log_info(f"u[ld]: Removing clone {self.file_1_path}")
             self.file_1_path = self.file_2_path
             self.file_2_path = None
 
             self.cmd_diff(["off"])
             self.reload_files()
             if self.file_1_path:
-                log("INFO", "u[ld]: Unloaded slot 1 and moved slot 2 into it")
+                log_info("u[ld]: Unloaded slot 1 and moved slot 2 into it")
                 self.message = "Unloaded slot 1 and moved slot 2 into it"
             else:
-                log("INFO", "u[ld]: Unloaded slot 1.")
+                log_info("u[ld]: Unloaded slot 1.")
                 self.message = "Unloaded slot 1"
             return
         elif args[0] == 2:
             if not self.file_2_path:
                 self.message = "No file in slot 2!"
-                log("WARN", "u[ld]: No file to unload in slot 2")
+                log_warn("u[ld]: No file to unload in slot 2")
                 return
             if self.file_2_path in self.created_clones:
                 selfhex_commons.remove_temp_file(self.file_2_path)
-                log("INFO", f"u[ld]: Removing clone {self.file_2_path}")
+                log_info(f"u[ld]: Removing clone {self.file_2_path}")
 
             self.file_2_path = None
             self.region_diff = None
             self.diff_mode = False
 
             self.reload_files()
-            log("INFO", "u[ld]: Unloaded slot 2")
+            log_info("u[ld]: Unloaded slot 2")
             self.message = "Unloaded slot 2"
             return
 
     def cmd_swap(self):
         if not self.file_1_path:
             self.message = "No file in slot 1!"
-            log("WARN", "sw[ap]: No file in slot 1 to swap")
+            log_warn("sw[ap]: No file in slot 1 to swap")
             return
         if not self.file_2_path:
             self.message = "No file in slot 2!"
-            log("WARN", "sw[ap]: No file in slot 2 to swap")
+            log_warn("sw[ap]: No file in slot 2 to swap")
             return
         temp_2_path = self.file_2_path
         self.file_2_path = self.file_1_path
         self.file_1_path = temp_2_path
         self.reload_files()
         self.message = "Swapped slot 1 and 2."
-        log("INFO", "sw[ap]: Swapped slot 1 and 2")
+        log_info("sw[ap]: Swapped slot 1 and 2")
 
     def cmd_diff(self, args):
         buf1 = self.mm_1 if self.mm_1 else b""
@@ -776,7 +793,7 @@ class HexViewer:
                 self.region_diff = None
                 self.diff_mode = False
                 self.message = "Region diff disabled."
-                log("INFO", "d[iff]: Region diff disabled")
+                log_info("d[iff]: Region diff disabled")
             else:
                 self.diff_mode = not self.diff_mode
                 if not self.mm_2:
@@ -793,7 +810,7 @@ class HexViewer:
             self.region_diff = None
             self.diff_mode = False
             self.message = "Diff mode disabled."
-            log("INFO", "d[iff]: Diff mode disabled")
+            log_info("d[iff]: Diff mode disabled")
             return
 
         try:
@@ -823,7 +840,7 @@ class HexViewer:
 
             if length <= 0:
                 self.message = "Invalid length"
-                log("ERROR", "d[iff]: Diff length not positive value")
+                log_err("d[iff]: Diff length not positive value")
                 return
             elif length > max(len1 - start1, len2 - start2):
                 length = max(len1 - start1, len2 - start2)
@@ -843,7 +860,7 @@ class HexViewer:
             self.message = f"Diffing 0x{start1:04X} vs 0x{start2:04X} (size: 0x{length:04X} / {length} bytes)"
         except Exception as e:
             self.message = f"Error parsing regions: {e}"
-            log("ERROR", f"d[iff]: Error parsing regions: {e}")
+            log_err(f"d[iff]: Error parsing regions: {e}")
 
     def cmd_jump(self, args):
         if not args:
@@ -869,7 +886,7 @@ class HexViewer:
                     target_offset = int(target, 16)
                 except ValueError:
                     self.message = f"Invalid offset or unknown mark: {args[0]}"
-                    log("ERROR", f"j[mp]: Invalid offset or unknown mark: {args[0]}")
+                    log_err(f"j[mp]: Invalid offset or unknown mark: {args[0]}")
                     return
 
         current_byte_offset = (self.current_line - 1) * self.bytes_per_line
@@ -946,10 +963,10 @@ class HexViewer:
 
         if moved is not None:
             self.message = f"Moved mark '{moved}' to 0x{offset:04X}"
-            log("INFO", f"m[rk]: Moved mark '{moved}' to 0x{offset:04X}")
+            log_info(f"m[rk]: Moved mark '{moved}' to 0x{offset:04X}")
         else:
             self.message = f"Set new mark '{name}' @ 0x{offset:04X}"
-            log("INFO", f"m[rk]: Set new mark {name} @ 0x{offset:04X}")
+            log_info(f"m[rk]: Set new mark {name} @ 0x{offset:04X}")
         self._rebuild_mark_pages()
         return
 
@@ -968,12 +985,12 @@ class HexViewer:
             self.mark_lengths.pop(name, None)
             self.marks.pop(name, None)
             self.message = f"Cleared mark {name}"
-            log("INFO", f"u[m]: Cleared mark {name}")
+            log_info(f"u[m]: Cleared mark {name}")
             self._rebuild_mark_pages()
 
             return
         self.message = f"Mark {name} not found."
-        log("WARN", f"u[m]: Mark {name} not found.")
+        log_warn(f"u[m]: Mark {name} not found.")
         return
 
     def cmd_find(self, args):
@@ -983,7 +1000,7 @@ class HexViewer:
 
         if not self.mm_1 or self.len_1 == 0:
             self.message = "No file loaded in slot 1 or file is empty."
-            log("WARN", "f[n]: No file loaded in slot 1 or file is empty.")
+            log_warn("f[n]: No file loaded in slot 1 or file is empty.")
             return
 
         hex_str = "".join(args).replace(" ", "")
@@ -991,7 +1008,7 @@ class HexViewer:
             target_bytes = bytes.fromhex(hex_str)
         except ValueError:
             self.message = "Invalid hex string."
-            log("WARN", f"f[n]: Invalid hex string {hex_str}")
+            log_warn(f"f[n]: Invalid hex string {hex_str}")
             return
 
         current_offset = (self.current_line - 1) * self.bytes_per_line
@@ -1005,10 +1022,10 @@ class HexViewer:
             self.cmd_mark([mark_name, str(idx), str(len(target_bytes))])
 
             self.message = f"Found sequence at 0x{idx:04X}"
-            log("INFO", f"f[n]: Found sequence at 0x{idx:04X}")
+            log_info(f"f[n]: Found sequence at 0x{idx:04X}")
         else:
             self.message = "Hex sequence not found in file 1."
-            log("INFO", "f[n]: Hex sequence not found in file 1")
+            log_info("f[n]: Hex sequence not found in file 1")
 
     def run(self) -> str:
         exit_status = "success"
@@ -1016,7 +1033,7 @@ class HexViewer:
         try:
             while self.running:
                 if not self.render():
-                    log("ERROR", "An error occurred during the rendering process.")
+                    log_err("An error occurred during the rendering process.")
                     exit_status = "An error occurred during the rendering process."
                     break
 
@@ -1043,18 +1060,19 @@ class HexViewer:
                 elif key == ":":
                     self.prompt_command()
         except OSError:
-            log("ERROR", f"selfhex tried to run in non-native terminal environment")
-            exit_status = f"selfhex tried to run in non-native terminal environment."
+            log_err("selfhex tried to run in non-native terminal environment")
+            exit_status = "selfhex tried to run in non-native terminal environment."
         except Exception as e:
-            log("ERROR", f"An unknown error occurred while running selfhex: {e}")
-            exit_status = f"An unknown error occurred while running selfhex: {e}"
+            lines = selfhex_commons.get_traceback_lines(e.__traceback__)
+            log_err(f"An unknown error occurred while running selfhex @ ln{'s' if len(lines) > 1 else ''} {' > '.join(lines)}: {e}")
+            exit_status = f"An unknown error occurred while running selfhex @ ln{'s' if len(lines) > 1 else ''} {' > '.join(lines)}: {e}"
         finally:
             sys.stdout.write("\x1b[2J\x1b[H")
             sys.stdout.flush()
             for clone in self.created_clones:
                 selfhex_commons.remove_temp_file(clone)
-                log("INFO", f"Removing clone {clone}")
-            log("INFO", "Quitting!")
+                log_info(f"Removing clone {clone}")
+            log_info("Quitting!")
             selfhex_commons.log_stop()
 
         return exit_status
