@@ -7,9 +7,9 @@
 A _self-diffing_ capable hex viewer.  
 Made with ♥ by quantum.
 
-<img alt="selfhex diffing 0x2000 with 0x4000 of the same file" src="assets/diff_example.png"/>
+<img alt="selfhex diffing 0x2000 with 0x4000 of the same file for 0x2000 bytes" src="assets/diff_example.png"/>
 <br>
-<sub>selfhex diffing 0x2000 with 0x4000 of the same file</sub>
+<sub>selfhex diffing 0x2000 with 0x4000 of the same file for 0x2000 bytes</sub>
 
 </div>
 
