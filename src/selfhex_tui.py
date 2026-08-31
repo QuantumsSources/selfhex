@@ -33,8 +33,6 @@ class TerminalResized(Exception):
 
 class HexViewer:
     def __init__(self, file_1_path: str | None = None, file_2_path: str | None = None, bytes_per_line: int = 8):
-        selfhex_commons.log_init()
-
         self.file_1_path = file_1_path
         self.file_2_path = file_2_path
         self.bytes_per_line = bytes_per_line
@@ -103,7 +101,7 @@ class HexViewer:
                 num_files += 1
             if self.file_2_path:
                 num_files += 1
-            msg = f"{num_files if num_files > 0 else 'No'} file{'' if num_files == 1 else 's'}{" loaded successfully" if num_files > 0 else " to reload"}"
+            msg = f"{num_files if num_files > 0 else 'No'} file{'' if num_files == 1 else 's'}{' loaded successfully' if num_files > 0 else ' to reload'}"
             msg_size = f" (0x{self.len_1:04X}"
             if num_files > 0:
                 if self.file_2_path:

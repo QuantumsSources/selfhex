@@ -10,7 +10,7 @@ import termios
 from types import TracebackType
 from ansicodelib import ANSIColors as col
 
-SELFHEX_VERSION = "1.20.9+1"
+SELFHEX_VERSION = "1.20.9+2"
 SELFHEX_VERCODE = "Painter"
 MIN_TERMINAL_SIZE = (80, 20)
 FAST_SCROLL_OFFSET = 128
@@ -274,13 +274,19 @@ def log(level: str, message: str):
     except Exception as e:
         sys.stderr.write(f"Logging error: {e}\n")
 
-def log_info(message: str):
+def log_info(message: str, do_print: bool = False):
+    if do_print:
+        print("selfhex " + col_str("(INFO)", col.FG_CYAN_EX) + ": " + message)
     log("INFO", message)
 
-def log_warn(message: str):
+def log_warn(message: str, do_print: bool = False):
+    if do_print:
+        print("selfhex " + col_str("(WARN)", col.FG_YELLOW_EX) + ": " + message)
     log("WARN", message)
 
-def log_err(message: str):
+def log_err(message: str, do_print: bool = False):
+    if do_print:
+        print("selfhex " + col_str("(ERROR)", col.FG_RED_EX) + ": " + message)
     log("ERROR", message)
 
 def log_init():
@@ -305,6 +311,7 @@ def log_init():
                 oldest_file = file_path, os.path.getmtime(file_path)
         os.remove(oldest_file[0])
         log_info(f"Cleared oldest log file {oldest_file[0]}! Consider running --clear-logs!")
+log_init()
 
 def log_stop():
     if close_log_file_path == "" or latest_log_file_path == "":

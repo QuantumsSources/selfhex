@@ -4,7 +4,7 @@ import sys
 import selfhex_tui
 import selfhex_commons
 from ansicodelib import ANSIColors as col
-from selfhex_commons import col_str
+from selfhex_commons import col_str, log_info, log_warn, log_err
 
 
 def get_args(sys_args: list[str]) -> tuple[list[str], str, dict[str, str]]:
@@ -37,15 +37,15 @@ def run_selfhex(file_1: str | None = None, file_2: str | None = None, width: int
         sys.stdout.write("\033[?1049l")
         sys.stdout.flush()
         if result is not None and result != "success":
-            print(f"selfhex: {result}")
+            log_warn(f"selfhex returned non-zero code: {result}", True)
             sys.exit(1)
 
 def check_file(file: str) -> bool:
     if not os.path.exists(file):
-        print(f"selfhex: error: {file} does not exist!")
+        log_err(f"{file} does not exist!", True)
         return False
     if os.path.isdir(file):
-        print(f"selfhex: error: {file} is a directory!")
+        log_err(f"{file} is a directory!", True)
         return False
     return True
 
@@ -95,13 +95,13 @@ def main(sys_args: list[str]):
         return
 
     if "show-logs" in args:
-        print(f"selfhex: info: log folder location is {selfhex_commons.LOG_FOLDER}")
+        log_info(f"log folder location is {selfhex_commons.LOG_FOLDER}", True)
         return
 
     if "new" in args:
         new_file_name = args["new"]
         if not new_file_name:
-            print("selfhex: error: --new requires <name> parameter")
+            log_err("--new requires <name> parameter", True)
             return
 
         size = None
@@ -109,7 +109,7 @@ def main(sys_args: list[str]):
             try:
                 size = selfhex_commons.parse_file_size(args["size"])
             except ValueError:
-                print(f"selfhex: error: invalid size: {args['size']}!")
+                log_err(f"invalid size: {args['size']}!", True)
                 return
 
         if not selfhex_commons.create_new_file(new_file_name, size, "force" in args):
@@ -117,7 +117,7 @@ def main(sys_args: list[str]):
         files.insert(0, new_file_name)
 
     if len(files) > 2:
-        print("selfhex: error: selfhex only supports opening up to two files at a time!")
+        log_err("selfhex only supports opening up to two files at a time!", True)
         return
 
     for f in files:
@@ -128,12 +128,12 @@ def main(sys_args: list[str]):
     try:
         width: int = int(str(width), 0)
     except ValueError:
-        print(f"selfhex: error: invalid width value: {width}")
+        log_err(f"invalid width value: {width}", True)
         width: int = 8
 
     make_clone = "c" in option_str or "clone" in args and args["clone"].lower() in ("", "true", "yes", "y", "1")
     if make_clone and not files:
-        print("selfhex: error: -c requires a file")
+        log_err("--clone requires a file", True)
         return
 
     keep_clone = "keep-clone" in args and args["keep-clone"].lower() in ("", "true", "yes", "y", "1")
@@ -142,7 +142,7 @@ def main(sys_args: list[str]):
             run_selfhex(None, None, width)
         elif len(files) == 1:
             if make_clone:
-                print("selfhex: info: cloning file 1 for self-diffing")
+                log_info("cloning file 1 for self-diffing", True)
                 temp_file = selfhex_commons.store_temp_file(files[0])
                 run_selfhex(temp_file, files[0], width)
             else:
@@ -154,17 +154,17 @@ def main(sys_args: list[str]):
                 run_selfhex(temp_file, files[0], width)
                 return
             elif make_clone:
-                print("selfhex: warning: --clone is ignored when two files are provided.")
+                log_warn("--clone is ignored when two files are provided.", True)
             run_selfhex(files[0], files[1], width)
     except Exception as e:
-        print(f"selfhex: error: an error occurred running selfhex")
-        print(f"selfhex: error: {e}")
+        log_err(f"an error occurred running selfhex", True)
+        log_err(f"{e}", True)
     finally:
         if not keep_clone:
             selfhex_commons.clear_temp_files()
 
 if __name__ == "__main__":
     if sys.platform not in ("linux", "android"):
-        print("selfhex: selfhex currently only works on linux")
+        log_info("selfhex currently only works on linux", True)
         sys.exit(0)
     main(sys.argv[1:])
