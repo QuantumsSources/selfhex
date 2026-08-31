@@ -92,7 +92,7 @@ class HexViewer:
                 self.region_diff["buf2"] = self.mm_2 if self.mm_2 else (self.mm_1 if self.mm_1 else b"")
                 max_off: int = max(self.region_diff["start1"] + self.region_diff["length"],
                                    self.region_diff["start2"] + self.region_diff["length"])
-                self._off_digits = max(6, len(f"{max_off:X}"))
+                self._off_digits = max(4, len(f"{max_off:X}"))
             else:
                 self._off_digits = max(4, len(f"{max_len:X}"))
 
@@ -199,6 +199,22 @@ class HexViewer:
             return col.FG_DARK + "00" + col.RESET
         return hex_b
 
+    @staticmethod
+    def _get_ascii_char(b: int, is_diff: bool = False, mark_col: str|None = None) -> str:
+        char = chr(b) if 32 <= b <= 126 else "."
+        if mark_col:
+            fg = getattr(ANSIForeground, mark_col.upper(), col.FG_YELLOW)
+            bg = getattr(ANSIBackground, mark_col.upper(), col.BG_YELLOW)
+
+            if is_diff:
+                return bg + col.FG_RED + char + col.RESET
+            return fg + char + col.RESET
+        if is_diff:
+            return col.FG_RED + char + col.RESET
+        if b == 0:
+            return col.FG_DARK + char + col.RESET
+        return char
+
     def _format_standard_line(self, data_row: int) -> str:
         offset = data_row * self.bytes_per_line
         fmt_offset = f"{offset:0{self._off_digits}X}"
@@ -229,12 +245,10 @@ class HexViewer:
 
             if b1 is not None:
                 line_1_parts.append(self._format_byte(b1, is_diff, mark_col))
-                char_1 = chr(b1) if 32 <= b1 <= 126 else "."
-                ascii_1_parts.append(col.FG_RED + char_1 + col.RESET if is_diff else char_1)
+                ascii_1_parts.append(self._get_ascii_char(b1, is_diff, mark_col))
             if b2 is not None:
                 line_2_parts.append(self._format_byte(b2, is_diff, mark_col))
-                char_2 = chr(b2) if 32 <= b2 <= 126 else "."
-                ascii_2_parts.append(col.FG_RED + char_2 + col.RESET if is_diff else char_2)
+                ascii_2_parts.append(self._get_ascii_char(b2, is_diff, mark_col))
 
         vis_len_1 = len(chunk_1) * 3 - 1 if chunk_1 else 0
         vis_len_2 = len(chunk_2) * 3 - 1 if chunk_2 else 0
@@ -288,12 +302,10 @@ class HexViewer:
 
             if b1 is not None:
                 line_1_parts.append(self._format_byte(b1, is_diff, mark_col_1))
-                char1 = chr(b1) if 32 <= b1 <= 126 else "."
-                ascii_1_parts.append(col.FG_RED + char1 + col.RESET if is_diff else char1)
+                ascii_1_parts.append(self._get_ascii_char(b1, is_diff, mark_col_1))
             if b2 is not None:
                 line_2_parts.append(self._format_byte(b2, is_diff, mark_col_2))
-                char2 = chr(b2) if 32 <= b2 <= 126 else "."
-                ascii_2_parts.append(col.FG_RED + char2 + col.RESET if is_diff else char2)
+                ascii_2_parts.append(self._get_ascii_char(b2, is_diff, mark_col_2))
 
         vis_len_1 = len(chunk_1) * 3 - 1 if chunk_1 else 0
         vis_len_2 = len(chunk_2) * 3 - 1 if chunk_2 else 0
@@ -794,13 +806,13 @@ class HexViewer:
                 log_info("d[iff]: Region diff disabled")
             else:
                 self.diff_mode = not self.diff_mode
-                if not self.mm_2:
+                if buf1 == buf2:
                     self.region_diff = {
                         "start1": 0, "start2": 0, "length": len1,
                         "buf1": buf1, "buf2": buf1, "is_same_file": True
                     }
                     self._off_digits = max(4, len(f"{len1:X}"))
-                status = "ON" if self.diff_mode else "OFF"
+                status = "enabled" if self.diff_mode else "disabled"
                 self.message = f"Diff mode is now {status}."
             return
 
@@ -849,7 +861,7 @@ class HexViewer:
                 "length": length,
                 "buf1": buf1,
                 "buf2": buf2,
-                "is_same_file": self.file_1_path == self.file_2_path
+                "is_same_file": buf1 == buf2
             }
             self.diff_mode = True
             self.current_line = 1

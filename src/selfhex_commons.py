@@ -10,7 +10,7 @@ import termios
 from types import TracebackType
 from ansicodelib import ANSIColors as col
 
-SELFHEX_VERSION = "1.20.9+2"
+SELFHEX_VERSION = "1.20.9+3"
 SELFHEX_VERCODE = "Painter"
 MIN_TERMINAL_SIZE = (80, 20)
 FAST_SCROLL_OFFSET = 128
