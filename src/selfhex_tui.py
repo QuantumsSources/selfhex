@@ -1005,7 +1005,7 @@ class HexViewer:
 
     def cmd_find(self, args):
         if not args:
-            self.message = "Usage: f[n] <hex_string>"
+            self.message = 'Usage: f[n] (<hex>|"<str>")'
             return
 
         if not self.mm_1 or self.len_1 == 0:
@@ -1013,29 +1013,42 @@ class HexViewer:
             log_warn("f[n]: No file loaded in slot 1 or file is empty.")
             return
 
-        hex_str = "".join(args).replace(" ", "")
-        try:
-            target_bytes = bytes.fromhex(hex_str)
-        except ValueError:
-            self.message = "Invalid hex string."
-            log_warn(f"f[n]: Invalid hex string {hex_str}")
-            return
+        s = "".join(args).replace(" ", "").strip()
+        if (s.startswith('"') and s.endswith('"')) or (s.startswith("'") and s.endswith("'")):
+            target_bytes = s[1:-1].encode("utf-8", errors="ignore")
+        elif s.lower().startswith("0x"):
+            clean_hex = s[2:]
+            if len(clean_hex) % 2 != 0:
+                clean_hex = "0" + clean_hex
+            try:
+                target_bytes = bytes.fromhex(clean_hex)
+            except ValueError:
+                self.message = f"Invalid hex string '{s}'"
+                log_warn(f"f[n]: Invalid hex string '{s}'")
+                return
+        else:
+            try:
+                target_bytes = bytes.fromhex(s)
+            except ValueError:
+                target_bytes = s.encode("utf-8", errors="ignore")
 
         current_offset = (self.current_line - 1) * self.bytes_per_line
 
-        idx = self.mm_1.find(target_bytes, current_offset + 1)
+        idx: int = self.mm_1.find(target_bytes, current_offset + 1)
         if idx == -1:
             idx = self.mm_1.find(target_bytes, 0, current_offset)
         if idx != -1:
             self.cmd_jump([str(idx)])
-            mark_name = target_bytes.hex()
-            self.cmd_mark([mark_name, str(idx), str(len(target_bytes))])
+            mark_name = self.get_mark_name(target_bytes.hex())
+            self.cmd_mark([f"f_{mark_name}", str(idx), str(len(target_bytes))])
 
             self.message = f"Found sequence at 0x{idx:04X}"
             log_info(f"f[n]: Found sequence at 0x{idx:04X}")
         else:
-            self.message = "Hex sequence not found in file 1."
-            log_info("f[n]: Hex sequence not found in file 1")
+            self.message = (f"Hex sequence {target_bytes} not found in file 1"
+                            f"{f' after 0x{current_offset:04X}' if current_offset > 0 else ''}.")
+            log_info(f"f[n]: Hex sequence {target_bytes} not found in file 1"
+                     f"{f' after 0x{current_offset:04X}' if current_offset > 0 else ''}.")
 
     def run(self) -> str:
         exit_status = "success"

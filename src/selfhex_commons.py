@@ -10,8 +10,8 @@ import termios
 from types import TracebackType
 from ansicodelib import ANSIColors as col
 
-SELFHEX_VERSION = "1.20.9+3"
-SELFHEX_VERCODE = "Painter"
+SELFHEX_VERSION = "1.21"
+SELFHEX_VERCODE = "Scribe"
 MIN_TERMINAL_SIZE = (80, 20)
 FAST_SCROLL_OFFSET = 128
 
@@ -53,7 +53,7 @@ COMMANDS = [
     "r[el]",
     "c[ln]",
     "d[iff] [off|(<off1> [<off2> [<range>]])]",
-    "f[n] (<hex>|<str>)",
+    'f[n] (<hex>|"<str>")',
     "j[mp] ([+-]<offset>)|<mark>",
     "m[rk] [<name> [<col>] [<off> [<len>]]]",
     "um[k] <name>",
@@ -85,7 +85,7 @@ COMMAND_HELP = {
     "r":  "r[el]: reload loaded files from disk",
     "c":  "c[ln]: clone file 1 for self-diffing",
     "d":  "d[iff] [off|(<off1> [<off2> [<range>]])]: compare files, offsets, or ranges",
-    "f":  "f[n] (<hex>|<str>): search for hex sequence or text in file 1",
+    "f":  'f[n] (<hex>|"<str>"): search for hex sequence or text in file 1',
     "j":  "j[mp] ([+-]<offset>|<mark>): jump to abs/rel offset or mark",
     "m":  "m[rk] [<name> [<col>] [<off> [<len>]]]: place a mark at given offset",
     "um": "um[k] <name>: clear a mark",
@@ -257,7 +257,7 @@ def parse_file_size(size_str: str) -> int:
     return int(number * multiplier)
 
 def get_rand_color() -> str:
-    PALETTE = ["FG_CYAN", "FG_MAGENTA", "FG_YELLOW", "FG_GREEN", "FG_BLUE", "FG_WHITE_EX"]
+    PALETTE = ["FG_CYAN", "FG_MAGENTA", "FG_YELLOW", "FG_GREEN", "FG_BLUE"]
     return random.choice(PALETTE)
 
 close_log_file_path: str = ""
