@@ -10,7 +10,7 @@ import termios
 from types import TracebackType
 from ansicodelib import ANSIColors as col
 
-SELFHEX_VERSION = "1.21"
+SELFHEX_VERSION = "1.21+1"
 SELFHEX_VERCODE = "Scribe"
 MIN_TERMINAL_SIZE = (80, 20)
 FAST_SCROLL_OFFSET = 128
@@ -164,10 +164,10 @@ def create_new_file(name: str, sz: int | None = None, force: bool = False) -> bo
     if os.path.exists(name):
         if not force:
             entity_type = "folder" if os.path.isdir(name) else "file"
-            print(f"selfhex: error: {entity_type} with name {name} already exists!")
+            log_err(f"{entity_type} with name {name} already exists!", True)
             return False
         else:
-            print(f"selfhex: warning: overwriting file {name}")
+            log_warn(f"overwriting file {name}", True)
             os.remove(name)
 
     with open(name, "wb") as f:
@@ -175,7 +175,7 @@ def create_new_file(name: str, sz: int | None = None, force: bool = False) -> bo
             f.write(random.randbytes(sz))
 
     size_msg = f" ({sz} bytes)" if sz is not None else ""
-    print(f"selfhex: info: created file {name}{size_msg}")
+    log_info(f"created file {name}{size_msg}", True)
     return True
 
 SESSION_TEMP_FILES: list[str] = []
