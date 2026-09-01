@@ -188,10 +188,9 @@ class HexViewer:
 
         if mark_col:
             fg = getattr(ANSIForeground, mark_col.upper(), col.FG_YELLOW)
-            bg = getattr(ANSIBackground, mark_col.upper(), col.BG_YELLOW)
 
             if is_diff:
-                return bg + col.FG_RED + hex_b + col.RESET
+                return col_str(hex_b, col.UNDERLINE + col.FG_RED)
             return fg + hex_b + col.RESET
         if is_diff:
             return col.FG_RED + hex_b + col.RESET
@@ -204,10 +203,9 @@ class HexViewer:
         char = chr(b) if 32 <= b <= 126 else "."
         if mark_col:
             fg = getattr(ANSIForeground, mark_col.upper(), col.FG_YELLOW)
-            bg = getattr(ANSIBackground, mark_col.upper(), col.BG_YELLOW)
 
             if is_diff:
-                return bg + col.FG_RED + char + col.RESET
+                return col_str(char, col.UNDERLINE + col.FG_RED)
             return fg + char + col.RESET
         if is_diff:
             return col.FG_RED + char + col.RESET
