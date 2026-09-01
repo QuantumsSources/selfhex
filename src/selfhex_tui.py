@@ -8,7 +8,7 @@ import mmap
 import signal
 import termios
 import selfhex_commons
-from ansicodelib import ANSIForeground, ANSIBackground, ANSIColors as col
+from ansicodelib import ANSIForeground, ANSIColors as col
 from selfhex_commons import col_str, log_info, log_warn, log_err
 
 def get_slice(mm: mmap.mmap | None, offset: int, length: int) -> bytes:
