@@ -993,12 +993,12 @@ class HexViewer:
             self.mark_lengths.pop(name, None)
             self.marks.pop(name, None)
             self.message = f"Cleared mark {name}"
-            log_info(f"u[m]: Cleared mark {name}")
+            log_info(f"um[k]: Cleared mark {name}")
             self._rebuild_mark_pages()
 
             return
         self.message = f"Mark {name} not found."
-        log_warn(f"u[m]: Mark {name} not found.")
+        log_warn(f"um[k]: Mark {name} not found.")
         return
 
     def cmd_find(self, args):
