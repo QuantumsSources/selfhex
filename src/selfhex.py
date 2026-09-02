@@ -37,7 +37,7 @@ def run_selfhex(file_1: str | None = None, file_2: str | None = None, width: int
         sys.stdout.write("\033[?1049l")
         sys.stdout.flush()
         if result is not None and result != "success":
-            log_warn(f"selfhex returned non-zero code: {result}", True)
+            log_warn(f"selfhex quit unexpectedly: {result}", True)
             sys.exit(1)
 
 def check_file(file: str) -> bool:

@@ -1051,7 +1051,16 @@ class HexViewer:
     def run(self) -> str:
         exit_status = "success"
 
+        class KilledByUserError(Exception):
+            pass
+
+        old_handler = None
         try:
+            def _on_sigterm(_, __):
+                raise KilledByUserError
+
+            old_handler = signal.signal(signal.SIGTERM, _on_sigterm)
+
             while self.running:
                 if not self.render():
                     log_err("An error occurred during the rendering process.")
@@ -1080,6 +1089,9 @@ class HexViewer:
                     self.running = False
                 elif key == ":":
                     self.prompt_command()
+        except KilledByUserError:
+            log_err("selfhex has received a SIGTERM signal")
+            exit_status = "selfhex was killed by even more magic"
         except OSError:
             log_err("selfhex tried to run in non-native terminal environment")
             exit_status = "selfhex tried to run in non-native terminal environment."
@@ -1088,6 +1100,9 @@ class HexViewer:
             log_err(f"An unknown error occurred while running selfhex @ ln{'s' if len(lines) > 1 else ''} {' > '.join(lines)}: {e}")
             exit_status = f"An unknown error occurred while running selfhex @ ln{'s' if len(lines) > 1 else ''} {' > '.join(lines)}: {e}"
         finally:
+            if old_handler is not None:
+                signal.signal(signal.SIGTERM, old_handler)
+
             sys.stdout.write("\x1b[2J\x1b[H")
             sys.stdout.flush()
             for clone in self.created_clones:
