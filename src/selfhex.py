@@ -3,7 +3,7 @@ import os
 import sys
 import selfhex_tui
 import selfhex_commons
-from ansicodelib import ANSIColors as col
+from ansicodelib import ANSIColors as col, ANSIBuffer as buffer, ANSICursor as cur
 from selfhex_commons import col_str, log_info, log_warn, log_err
 
 
@@ -25,17 +25,19 @@ def get_args(sys_args: list[str]) -> tuple[list[str], str, dict[str, str]]:
     return files, option_str, dashed_args
 
 def run_selfhex(file_1: str | None = None, file_2: str | None = None, width: int = 8):
-    sys.stdout.write("\033[?1049h")
-    sys.stdout.flush()
-    print("\033[H", end="")
+    buffer.buf_enable_alt()
+    cur.cur_hide()
+    buffer.buf_flush()
+
     result = None
     try:
         result = selfhex_tui.main(file_1, file_2, width)
     except KeyboardInterrupt:
         return
     finally:
-        sys.stdout.write("\033[?1049l")
-        sys.stdout.flush()
+        buffer.buf_disable_alt()
+        buffer.buf_flush()
+
         if result is not None and result != "success":
             log_warn(f"selfhex quit unexpectedly: {result}", True)
             sys.exit(1)
@@ -84,7 +86,7 @@ def main(sys_args: list[str]):
         print(f"{col_str('selfhex', col.FG_GREEN_EX)}"
               f" {col_str(f'v{ver}', col.FG_YELLOW_EX)} ({col_str(code, col.FG_YELLOW_EX)})"
               f" - self-diffing capable hex viewer"
-              f" | made with {col_str('♥', col.FG_RED_EX)} by quantum")
+              f" | made with {col_str('❤︎', col.FG_RED_EX)} by quantum")
         return
 
     if "clear-logs" in args:

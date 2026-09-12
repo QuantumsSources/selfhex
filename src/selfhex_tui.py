@@ -8,7 +8,7 @@ import mmap
 import signal
 import termios
 import selfhex_commons
-from ansicodelib import ANSIForeground, ANSIColors as col
+from ansicodelib import ANSIColors as col, ANSIBuffer as buffer
 from selfhex_commons import col_str, log_info, log_warn, log_err
 
 def get_slice(mm: mmap.mmap | None, offset: int, length: int) -> bytes:
@@ -187,7 +187,7 @@ class HexViewer:
         hex_b = f"{b:02X}"
 
         if mark_col:
-            fg = getattr(ANSIForeground, mark_col.upper(), col.FG_YELLOW)
+            fg = getattr(col, mark_col.upper(), col.FG_YELLOW)
 
             if is_diff:
                 return col_str(hex_b, col.UNDERLINE + col.FG_RED)
@@ -202,7 +202,7 @@ class HexViewer:
     def _get_ascii_char(b: int, is_diff: bool = False, mark_col: str|None = None) -> str:
         char = chr(b) if 32 <= b <= 126 else "."
         if mark_col:
-            fg = getattr(ANSIForeground, mark_col.upper(), col.FG_YELLOW)
+            fg = getattr(col, mark_col.upper(), col.FG_YELLOW)
 
             if is_diff:
                 return col_str(char, col.UNDERLINE + col.FG_RED)
@@ -620,7 +620,7 @@ class HexViewer:
 
         self.message = (f"{col_str('selfhex', col.FG_GREEN_EX)}"
                         f" {col_str(f'v{ver}', col.FG_YELLOW_EX)} ({col_str(code, col.FG_YELLOW_EX)})"
-                        f" | made with {col_str('♥', col.FG_RED_EX)} by quantum")
+                        f" | made with {col_str('❤︎', col.FG_RED_EX)} by quantum")
         return
 
     def cmd_new(self, args):
@@ -931,7 +931,7 @@ class HexViewer:
         nums = []
 
         for arg in args[1:]:
-            if hasattr(ANSIForeground, self.get_color_name(arg)):
+            if hasattr(col, self.get_color_name(arg)):
                 if color is None:
                     color = self.get_color_name(arg)
             else:
@@ -1103,8 +1103,7 @@ class HexViewer:
             if old_handler is not None:
                 signal.signal(signal.SIGTERM, old_handler)
 
-            sys.stdout.write("\x1b[2J\x1b[H")
-            sys.stdout.flush()
+            buffer.buf_clear()
             for clone in self.created_clones:
                 selfhex_commons.remove_temp_file(clone)
                 log_info(f"Removing clone {clone}")
