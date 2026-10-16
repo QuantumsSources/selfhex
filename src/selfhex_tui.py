@@ -1,14 +1,16 @@
 from __future__ import annotations
 import os
 import re
-import select
 import tty
 import sys
 import mmap
 import signal
+import select
 import termios
+import selfhex_core
 import selfhex_commons
-from ansicodelib import ANSIColors as col, ANSIBuffer as buffer
+from selfhex_core import SELFHEX_VERSION, SELFHEX_VERCODE
+from ansicodelib import ANSIColors as col, ANSIBuffer as buffer, ANSICursor as cur
 from selfhex_commons import col_str, log_info, log_warn, log_err
 
 def get_slice(mm: mmap.mmap | None, offset: int, length: int) -> bytes:
@@ -326,7 +328,7 @@ class HexViewer:
 
     def render(self) -> bool:
         console_size = os.get_terminal_size()
-        min_size = selfhex_commons.MIN_TERMINAL_SIZE
+        min_size = selfhex_core.MIN_TERMINAL_SIZE
 
         max_lines = console_size.lines - 3
 
@@ -514,9 +516,12 @@ class HexViewer:
         if not self.fits:
             return
 
+        cur.cur_show()
         termios.tcflush(sys.stdin.fileno(), termios.TCIFLUSH)
 
         raw_input = self._read_raw_line(prompt=":")
+        cur.cur_hide()
+
         if raw_input is None:
             log_warn("CTRL+C, ESC, or terminal resize mid prompt!")
             return
@@ -615,8 +620,8 @@ class HexViewer:
             self.message = f"{page_idx}/{len(selfhex_commons.HELP_PAGES)}: {page_content}"
 
     def cmd_ver(self):
-        ver = selfhex_commons.SELFHEX_VERSION
-        code = selfhex_commons.SELFHEX_VERCODE
+        ver = SELFHEX_VERSION
+        code = SELFHEX_VERCODE
 
         self.message = (f"{col_str('selfhex', col.FG_GREEN_EX)}"
                         f" {col_str(f'v{ver}', col.FG_YELLOW_EX)} ({col_str(code, col.FG_YELLOW_EX)})"
@@ -1080,10 +1085,10 @@ class HexViewer:
                     self.current_line = min(max_scroll, self.current_line + 1)
                     self.message = ""
                 elif key in ("SHIFT_UP", "W", "K"):
-                    self.current_line = max(1, self.current_line - selfhex_commons.FAST_SCROLL_OFFSET)
+                    self.current_line = max(1, self.current_line - selfhex_core.FAST_SCROLL_OFFSET)
                     self.message = ""
                 elif key in ("SHIFT_DOWN", "S", "J"):
-                    self.current_line = min(max_scroll, self.current_line + selfhex_commons.FAST_SCROLL_OFFSET)
+                    self.current_line = min(max_scroll, self.current_line + selfhex_core.FAST_SCROLL_OFFSET)
                     self.message = ""
                 elif key in ("q", "Q"):
                     self.running = False

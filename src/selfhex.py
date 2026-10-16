@@ -5,6 +5,7 @@ import selfhex_tui
 import selfhex_commons
 from ansicodelib import ANSIColors as col, ANSIBuffer as buffer, ANSICursor as cur
 from selfhex_commons import col_str, log_info, log_warn, log_err
+from selfhex_core import SELFHEX_VERSION, SELFHEX_VERCODE
 
 
 def get_args(sys_args: list[str]) -> tuple[list[str], str, dict[str, str]]:
@@ -80,11 +81,8 @@ def main(sys_args: list[str]):
         return
 
     if "version" in args or "v" in option_str:
-        ver = selfhex_commons.SELFHEX_VERSION
-        code = selfhex_commons.SELFHEX_VERCODE
-
         print(f"{col_str('selfhex', col.FG_GREEN_EX)}"
-              f" {col_str(f'v{ver}', col.FG_YELLOW_EX)} ({col_str(code, col.FG_YELLOW_EX)})"
+              f" {col_str(f'v{SELFHEX_VERSION}', col.FG_YELLOW_EX)} ({col_str(SELFHEX_VERCODE, col.FG_YELLOW_EX)})"
               f" - self-diffing capable hex viewer"
               f" | made with {col_str('❤︎', col.FG_RED_EX)} by quantum")
         return

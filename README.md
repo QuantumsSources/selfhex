@@ -1,22 +1,14 @@
 <div align="center">
 
 # selfhex
-**the only hex viewer starting at version 1.19.10+3**  
-<sub>(as of 16/8/2026)</sub>
-
-A _self-diffing_ capable hex viewer.  
+A _self-diffing_ capable hex viewer.\
 Made with ♥ by quantum.
 
-<img alt="selfhex diffing 0x2000 with 0x4000 of the same file for 0x2000 bytes" src="assets/diff_example.png"/>
+<img src="assets/diff_example.png" alt="selfhex diffing 0x2000 with 0x4000 of the same file for 0x2000 bytes" width="600"/>
 <br>
 <sub>selfhex diffing 0x2000 with 0x4000 of the same file for 0x2000 bytes</sub>
 
 </div>
-
-> [!important]
-> Currently, due to _heavy, unsupervised_ usage of `termios` and `tty`, selfhex only works on Linux! <sub>(and Android)</sub>  
-> This limitation is expected to stay for the foreseeable future.  
-> Sorry, not sorry, Windows people. </3
 
 ## Features
 ### Self-diffing capable
@@ -37,40 +29,22 @@ To run selfhex, you'll need:
 - That's it;
 
 ## Installation
-You don't _really_ need to install **selfhex**, you can just clone the repository and run it directly:
-```bash
-git clone https://github.com/QuantumsSources/selfhex.git
-cd selfhex
-python3 src/selfhex.py
-```
+> [!important]
+> Currently, due to _heavy, unsupervised_ usage of `termios` and `tty`, selfhex only works on Linux and Android
+<sub>(through Termux)</sub>.\
+> It *might* run through WSL, though it's not tested!
 
-Optionally (but recommended), you can install it:
-You'll need one thing:
-- `pyinstaller`, to compile it; <sub>(If `pip` doesn't work, see the note below)</sub>
+To install selfhex, you'll need one thing:
+- `nuitka`, to compile it (aur/deb: `nuitka`);
 - This list has two bullet points, but you only had to read the first;
 
-> [!note]
-> On some Linux distributions (Arch, mainly, btw), `pip` cannot directly install `pyinstaller` due to PEP 668.
-> 
-> To install it, you can either:
-> 1. Force `pip` to do it against its will _(please don't)_: `pip install pyinstaller --break-system-packages`;
-> 2. Use `pipx` (on Arch, `sudo pacman -S python-pipx`) to install `pyinstaller`. See below.
-
-> [!important]
->  If you're using `pipx`, run this:
-> ```bash
-> # only if you're using pipx:
-> pipx install pyinstaller
-> pipx ensurepath
-> ```
-Then, clone the repository (if you haven't already), and run `build.py`, like this:
+Then, clone the repository, and run `build.py`, like this:
 ```bash
 git clone https://github.com/QuantumsSources/selfhex.git
 cd selfhex
 python3 build.py
 ```
 This will compile selfhex, link the binary to `~/.local/bin/selfhex`, and add a desktop entry.
-Afterward, you can either reboot, or update the desktop database (and icon cache).
 
 ## Usage
 ### Command line
@@ -86,4 +60,4 @@ Afterward, you can either reboot, or update the desktop database (and icon cache
 ## Notes
 - The icon for selfhex is ~~stolen~~ _borrowed_ from Sonic the Hedgehog 3.<br/>Original sprite by SEGA and Sonic Team, with minimal edits by me.
 
-<p align="center" style="opacity: 0.333"><sub>(woah... it's so empty down here...)</sub></p>
+<p align="center"><sub>(woah... it's so empty down here...)</sub></p>
